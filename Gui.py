@@ -1,30 +1,200 @@
-from PyQt4 import QtGui  # (the example applies equally well to PySide)
-import pyqtgraph as pg
+# -*- coding: utf-8 -*-
 
-## Always start by initializing Qt (only once per application)
-app = QtGui.QApplication([])
+# Form implementation generated from reading ui file 'gui.ui'
+#
+# Created by: PyQt4 UI code generator 4.11.4
+#
+# WARNING! All changes made in this file will be lost!
 
-## Define a top-level widget to hold everything
-w = QtGui.QWidget()
+from PyQt4 import QtCore, QtGui
 
-## Create some widgets to be placed inside
-btn = QtGui.QPushButton('press me')
-text = QtGui.QLineEdit('enter text')
-listw = QtGui.QListWidget()
-plot = pg.PlotWidget()
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    def _fromUtf8(s):
+        return s
 
-## Create a grid layout to manage the widgets size and position
-layout = QtGui.QGridLayout()
-w.setLayout(layout)
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
-## Add widgets to the layout in their proper positions
-layout.addWidget(btn, 0, 0)   # button goes in upper-left
-layout.addWidget(text, 1, 0)   # text edit goes in middle-left
-layout.addWidget(listw, 2, 0)  # list widget goes in bottom-left
-layout.addWidget(plot, 0, 1, 3, 1)  # plot goes on right side, spanning 3 rows
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName(_fromUtf8("MainWindow"))
+        MainWindow.resize(1156, 945)
+        self.centralwidget = QtGui.QWidget(MainWindow)
+        self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
+        self.gridLayout = QtGui.QGridLayout(self.centralwidget)
+        self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
+        self.Tabs = QtGui.QTabWidget(self.centralwidget)
+        self.Tabs.setObjectName(_fromUtf8("Tabs"))
+        self.TimeScanTab = QtGui.QWidget()
+        self.TimeScanTab.setObjectName(_fromUtf8("TimeScanTab"))
+        self.verticalLayout = QtGui.QVBoxLayout(self.TimeScanTab)
+        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.horizontalLayout_2 = QtGui.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
+        self.gridLayout_5 = QtGui.QGridLayout()
+        self.gridLayout_5.setObjectName(_fromUtf8("gridLayout_5"))
+        self.TDwell = QtGui.QLineEdit(self.TimeScanTab)
+        self.TDwell.setObjectName(_fromUtf8("TDwell"))
+        self.gridLayout_5.addWidget(self.TDwell, 5, 3, 1, 1)
+        self.TStep = QtGui.QLineEdit(self.TimeScanTab)
+        self.TStep.setObjectName(_fromUtf8("TStep"))
+        self.gridLayout_5.addWidget(self.TStep, 4, 3, 1, 1)
+        self.label_4 = QtGui.QLabel(self.TimeScanTab)
+        self.label_4.setObjectName(_fromUtf8("label_4"))
+        self.gridLayout_5.addWidget(self.label_4, 5, 2, 1, 1)
+        self.TScanStart = QtGui.QLineEdit(self.TimeScanTab)
+        self.TScanStart.setObjectName(_fromUtf8("TScanStart"))
+        self.gridLayout_5.addWidget(self.TScanStart, 1, 3, 1, 1)
+        self.TStop = QtGui.QPushButton(self.TimeScanTab)
+        self.TStop.setObjectName(_fromUtf8("TStop"))
+        self.gridLayout_5.addWidget(self.TStop, 0, 3, 1, 1)
+        self.TStart = QtGui.QPushButton(self.TimeScanTab)
+        self.TStart.setObjectName(_fromUtf8("TStart"))
+        self.gridLayout_5.addWidget(self.TStart, 0, 2, 1, 1)
+        self.label_2 = QtGui.QLabel(self.TimeScanTab)
+        self.label_2.setObjectName(_fromUtf8("label_2"))
+        self.gridLayout_5.addWidget(self.label_2, 3, 2, 1, 1)
+        self.label_3 = QtGui.QLabel(self.TimeScanTab)
+        self.label_3.setObjectName(_fromUtf8("label_3"))
+        self.gridLayout_5.addWidget(self.label_3, 4, 2, 1, 1)
+        self.TScanLength = QtGui.QLineEdit(self.TimeScanTab)
+        self.TScanLength.setObjectName(_fromUtf8("TScanLength"))
+        self.gridLayout_5.addWidget(self.TScanLength, 3, 3, 1, 1)
+        self.label = QtGui.QLabel(self.TimeScanTab)
+        self.label.setObjectName(_fromUtf8("label"))
+        self.gridLayout_5.addWidget(self.label, 1, 2, 1, 1)
+        self.horizontalLayout_2.addLayout(self.gridLayout_5)
+        self.graphicsView = QtGui.QGraphicsView(self.TimeScanTab)
+        self.graphicsView.setObjectName(_fromUtf8("graphicsView"))
+        self.horizontalLayout_2.addWidget(self.graphicsView)
+        self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.TPlot = PlotWidget(self.TimeScanTab)
+        self.TPlot.setObjectName(_fromUtf8("TPlot"))
+        self.verticalLayout.addWidget(self.TPlot)
+        self.Tabs.addTab(self.TimeScanTab, _fromUtf8(""))
+        self.XYApTab = QtGui.QWidget()
+        self.XYApTab.setObjectName(_fromUtf8("XYApTab"))
+        self.horizontalLayout_3 = QtGui.QHBoxLayout(self.XYApTab)
+        self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
+        self.formLayout_2 = QtGui.QFormLayout()
+        self.formLayout_2.setFieldGrowthPolicy(QtGui.QFormLayout.AllNonFixedFieldsGrow)
+        self.formLayout_2.setHorizontalSpacing(6)
+        self.formLayout_2.setObjectName(_fromUtf8("formLayout_2"))
+        self.XYStartBut = QtGui.QPushButton(self.XYApTab)
+        self.XYStartBut.setObjectName(_fromUtf8("XYStartBut"))
+        self.formLayout_2.setWidget(0, QtGui.QFormLayout.LabelRole, self.XYStartBut)
+        self.label_6 = QtGui.QLabel(self.XYApTab)
+        self.label_6.setObjectName(_fromUtf8("label_6"))
+        self.formLayout_2.setWidget(1, QtGui.QFormLayout.LabelRole, self.label_6)
+        self.XYStart = QtGui.QLineEdit(self.XYApTab)
+        self.XYStart.setObjectName(_fromUtf8("XYStart"))
+        self.formLayout_2.setWidget(1, QtGui.QFormLayout.FieldRole, self.XYStart)
+        self.label_7 = QtGui.QLabel(self.XYApTab)
+        self.label_7.setObjectName(_fromUtf8("label_7"))
+        self.formLayout_2.setWidget(2, QtGui.QFormLayout.LabelRole, self.label_7)
+        self.XYStepX = QtGui.QLineEdit(self.XYApTab)
+        self.XYStepX.setObjectName(_fromUtf8("XYStepX"))
+        self.formLayout_2.setWidget(2, QtGui.QFormLayout.FieldRole, self.XYStepX)
+        self.label_8 = QtGui.QLabel(self.XYApTab)
+        self.label_8.setObjectName(_fromUtf8("label_8"))
+        self.formLayout_2.setWidget(3, QtGui.QFormLayout.LabelRole, self.label_8)
+        self.XYStepY = QtGui.QLineEdit(self.XYApTab)
+        self.XYStepY.setObjectName(_fromUtf8("XYStepY"))
+        self.formLayout_2.setWidget(3, QtGui.QFormLayout.FieldRole, self.XYStepY)
+        self.label_9 = QtGui.QLabel(self.XYApTab)
+        self.label_9.setObjectName(_fromUtf8("label_9"))
+        self.formLayout_2.setWidget(4, QtGui.QFormLayout.LabelRole, self.label_9)
+        self.XYLengthX = QtGui.QLineEdit(self.XYApTab)
+        self.XYLengthX.setObjectName(_fromUtf8("XYLengthX"))
+        self.formLayout_2.setWidget(4, QtGui.QFormLayout.FieldRole, self.XYLengthX)
+        self.label_10 = QtGui.QLabel(self.XYApTab)
+        self.label_10.setObjectName(_fromUtf8("label_10"))
+        self.formLayout_2.setWidget(5, QtGui.QFormLayout.LabelRole, self.label_10)
+        self.XYLengthY = QtGui.QLineEdit(self.XYApTab)
+        self.XYLengthY.setObjectName(_fromUtf8("XYLengthY"))
+        self.formLayout_2.setWidget(5, QtGui.QFormLayout.FieldRole, self.XYLengthY)
+        self.XYStopBut = QtGui.QPushButton(self.XYApTab)
+        self.XYStopBut.setObjectName(_fromUtf8("XYStopBut"))
+        self.formLayout_2.setWidget(0, QtGui.QFormLayout.FieldRole, self.XYStopBut)
+        self.horizontalLayout_3.addLayout(self.formLayout_2)
+        self.XYPlot = PlotWidget(self.XYApTab)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.XYPlot.sizePolicy().hasHeightForWidth())
+        self.XYPlot.setSizePolicy(sizePolicy)
+        self.XYPlot.setObjectName(_fromUtf8("XYPlot"))
+        self.horizontalLayout_3.addWidget(self.XYPlot)
+        self.Tabs.addTab(self.XYApTab, _fromUtf8(""))
+        self.MFSetTab = QtGui.QWidget()
+        self.MFSetTab.setObjectName(_fromUtf8("MFSetTab"))
+        self.Tabs.addTab(self.MFSetTab, _fromUtf8(""))
+        self.gridLayout.addWidget(self.Tabs, 0, 0, 1, 1)
+        self.gridLayout_6 = QtGui.QGridLayout()
+        self.gridLayout_6.setObjectName(_fromUtf8("gridLayout_6"))
+        self.label_5 = QtGui.QLabel(self.centralwidget)
+        self.label_5.setObjectName(_fromUtf8("label_5"))
+        self.gridLayout_6.addWidget(self.label_5, 0, 1, 1, 1)
+        self.DelayPos = QtGui.QLineEdit(self.centralwidget)
+        self.DelayPos.setObjectName(_fromUtf8("DelayPos"))
+        self.gridLayout_6.addWidget(self.DelayPos, 0, 3, 1, 1)
+        self.gridLayout.addLayout(self.gridLayout_6, 1, 0, 1, 1)
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtGui.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1156, 21))
+        self.menubar.setObjectName(_fromUtf8("menubar"))
+        self.menuFile = QtGui.QMenu(self.menubar)
+        self.menuFile.setObjectName(_fromUtf8("menuFile"))
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtGui.QStatusBar(MainWindow)
+        self.statusbar.setObjectName(_fromUtf8("statusbar"))
+        MainWindow.setStatusBar(self.statusbar)
+        self.actionQuit = QtGui.QAction(MainWindow)
+        self.actionQuit.setObjectName(_fromUtf8("actionQuit"))
+        self.menuFile.addAction(self.actionQuit)
+        self.menubar.addAction(self.menuFile.menuAction())
 
-## Display the widget as a new window
-w.show()
+        self.retranslateUi(MainWindow)
+        self.Tabs.setCurrentIndex(1)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-## Start the Qt event loop
-app.exec_()
+    def retranslateUi(self, MainWindow):
+        MainWindow.setWindowTitle(_translate("MainWindow", "Lab Control Software", None))
+        self.label_4.setText(_translate("MainWindow", "Dwell (s)", None))
+        self.TStop.setText(_translate("MainWindow", "Stop", None))
+        self.TStart.setText(_translate("MainWindow", "Start", None))
+        self.label_2.setText(_translate("MainWindow", "Scan length (stage)", None))
+        self.label_3.setText(_translate("MainWindow", "Step (stage)", None))
+        self.label.setText(_translate("MainWindow", "Scan start (stage)", None))
+        self.Tabs.setTabText(self.Tabs.indexOf(self.TimeScanTab), _translate("MainWindow", "Time", None))
+        self.XYStartBut.setText(_translate("MainWindow", "GO!", None))
+        self.label_6.setText(_translate("MainWindow", "Scan start (um):", None))
+        self.label_7.setText(_translate("MainWindow", "Step (X) (um):", None))
+        self.label_8.setText(_translate("MainWindow", "Step (Y) (um):", None))
+        self.label_9.setText(_translate("MainWindow", "Length (X) (um):", None))
+        self.label_10.setText(_translate("MainWindow", "Length (Y) (um):", None))
+        self.XYStopBut.setText(_translate("MainWindow", "STOP!", None))
+        self.Tabs.setTabText(self.Tabs.indexOf(self.XYApTab), _translate("MainWindow", "XY (aperture)", None))
+        self.Tabs.setTabText(self.Tabs.indexOf(self.MFSetTab), _translate("MainWindow", "MFLI Settings", None))
+        self.label_5.setText(_translate("MainWindow", "Move delay stage to:", None))
+        self.menuFile.setTitle(_translate("MainWindow", "File", None))
+        self.actionQuit.setText(_translate("MainWindow", "Quit..", None))
+
+from pyqtgraph import PlotWidget
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    MainWindow = QtGui.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+
