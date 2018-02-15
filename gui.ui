@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="Tabs">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="TimeScanTab">
        <attribute name="title">
@@ -29,6 +29,12 @@
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
            <layout class="QGridLayout" name="gridLayout_5">
+            <property name="horizontalSpacing">
+             <number>1</number>
+            </property>
+            <property name="verticalSpacing">
+             <number>6</number>
+            </property>
             <item row="5" column="3">
              <widget class="QLineEdit" name="TDwell"/>
             </item>
@@ -83,10 +89,41 @@
               </property>
              </widget>
             </item>
+            <item row="5" column="4">
+             <widget class="QPushButton" name="GoTDwell">
+              <property name="text">
+               <string>Set</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="4">
+             <widget class="QPushButton" name="GoTScanLength">
+              <property name="text">
+               <string>Set</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="4">
+             <widget class="QPushButton" name="GoTStep">
+              <property name="text">
+               <string>Set</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="QPushButton" name="GoTScanStart">
+              <property name="text">
+               <string>Go</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
           <item>
-           <widget class="QGraphicsView" name="graphicsView">
+           <widget class="PlotWidget" name="TFFTPlot">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>1</horstretch>
@@ -122,60 +159,112 @@
             </property>
            </widget>
           </item>
+          <item row="0" column="1">
+           <widget class="QPushButton" name="XYStopBut">
+            <property name="text">
+             <string>STOP!</string>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_6">
             <property name="text">
-             <string>Scan start (um):</string>
+             <string>Scan start (X) (um):</string>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLineEdit" name="XYStart"/>
+           <widget class="QLineEdit" name="XYStartX"/>
           </item>
-          <item row="2" column="0">
+          <item row="2" column="1">
+           <widget class="QPushButton" name="GoXYStartX">
+            <property name="text">
+             <string>Go</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLineEdit" name="XYStartY"/>
+          </item>
+          <item row="4" column="1">
+           <widget class="QPushButton" name="GoXYStartY">
+            <property name="text">
+             <string>Go</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
            <widget class="QLabel" name="label_7">
             <property name="text">
              <string>Step (X) (um):</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="1">
+          <item row="5" column="1">
            <widget class="QLineEdit" name="XYStepX"/>
           </item>
-          <item row="3" column="0">
+          <item row="6" column="1">
+           <widget class="QPushButton" name="GoXYStepX">
+            <property name="text">
+             <string>Set</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
            <widget class="QLabel" name="label_8">
             <property name="text">
              <string>Step (Y) (um):</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="1">
+          <item row="7" column="1">
            <widget class="QLineEdit" name="XYStepY"/>
           </item>
-          <item row="4" column="0">
+          <item row="8" column="1">
+           <widget class="QPushButton" name="GoXYStepY">
+            <property name="text">
+             <string>Set</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
            <widget class="QLabel" name="label_9">
             <property name="text">
              <string>Length (X) (um):</string>
             </property>
            </widget>
           </item>
-          <item row="4" column="1">
+          <item row="9" column="1">
            <widget class="QLineEdit" name="XYLengthX"/>
           </item>
-          <item row="5" column="0">
+          <item row="10" column="1">
+           <widget class="QPushButton" name="GoXYLengthX">
+            <property name="text">
+             <string>Set</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="0">
            <widget class="QLabel" name="label_10">
             <property name="text">
              <string>Length (Y) (um):</string>
             </property>
            </widget>
           </item>
-          <item row="5" column="1">
+          <item row="11" column="1">
            <widget class="QLineEdit" name="XYLengthY"/>
           </item>
-          <item row="0" column="1">
-           <widget class="QPushButton" name="XYStopBut">
+          <item row="12" column="1">
+           <widget class="QPushButton" name="GoXYLengthY">
             <property name="text">
-             <string>STOP!</string>
+             <string>Set</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Scan start (Y) (um):</string>
             </property>
            </widget>
           </item>
