@@ -167,15 +167,18 @@ class Ui_MainWindow(object):
         self.label_11 = QtGui.QLabel(self.XYApTab)
         self.label_11.setObjectName(_fromUtf8("label_11"))
         self.formLayout_2.setWidget(3, QtGui.QFormLayout.LabelRole, self.label_11)
+        self.XYSave = QtGui.QPushButton(self.XYApTab)
+        self.XYSave.setObjectName(_fromUtf8("XYSave"))
+        self.formLayout_2.setWidget(13, QtGui.QFormLayout.FieldRole, self.XYSave)
         self.horizontalLayout_3.addLayout(self.formLayout_2)
-        self.XYPlot = PlotWidget(self.XYApTab)
+        self.canvas = Canvas(self.XYApTab)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.XYPlot.sizePolicy().hasHeightForWidth())
-        self.XYPlot.setSizePolicy(sizePolicy)
-        self.XYPlot.setObjectName(_fromUtf8("XYPlot"))
-        self.horizontalLayout_3.addWidget(self.XYPlot)
+        sizePolicy.setHeightForWidth(self.canvas.sizePolicy().hasHeightForWidth())
+        self.canvas.setSizePolicy(sizePolicy)
+        self.canvas.setObjectName(_fromUtf8("canvas"))
+        self.horizontalLayout_3.addWidget(self.canvas)
         self.Tabs.addTab(self.XYApTab, _fromUtf8(""))
         self.MFSetTab = QtGui.QWidget()
         self.MFSetTab.setObjectName(_fromUtf8("MFSetTab"))
@@ -236,12 +239,14 @@ class Ui_MainWindow(object):
         self.label_10.setText(_translate("MainWindow", "Length (Y) (um):", None))
         self.GoXYLengthY.setText(_translate("MainWindow", "Set", None))
         self.label_11.setText(_translate("MainWindow", "Scan start (Y) (um):", None))
+        self.XYSave.setText(_translate("MainWindow", "Save Last", None))
         self.Tabs.setTabText(self.Tabs.indexOf(self.XYApTab), _translate("MainWindow", "XY (aperture)", None))
         self.Tabs.setTabText(self.Tabs.indexOf(self.MFSetTab), _translate("MainWindow", "MFLI Settings", None))
         self.label_5.setText(_translate("MainWindow", "Move delay stage to:", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.actionQuit.setText(_translate("MainWindow", "Quit..", None))
 
+from canvas import Canvas
 from pyqtgraph import PlotWidget
 
 if __name__ == "__main__":

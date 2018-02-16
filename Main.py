@@ -2,6 +2,8 @@
 ###### Lab Control software for 910 ######
 ############### Tom Siday ################
 ##########################################
+import matplotlib
+matplotlib.use('Qt4Agg')
 
 ### start bokeh server BEFORE running this program -- (bokeh serve)
 ## Initial scan parameter values 
@@ -17,11 +19,11 @@ jog_Theta = 0.5 # Rotation jog step for NanoMax600
 XY_posX_init = 0
 XY_posY_init = 0
 
-XYStepX = 0.1 #mm
-XYStepY = 0.1 #mm
+XYStepX = 10 #um
+XYStepY = 10 #um
 
-XYLengthX = 1 #mm
-XYLengthY = 1 #mm
+XYLengthX = 100 #um
+XYLengthY = 100 #um
 
 ##################################################################
 ### Initialise the KLinGER MC4 motion controller (delay stage) ###
@@ -130,7 +132,10 @@ from Gui import Ui_MainWindow
 import pyqtgraph as pg
 from pyqtgraph import PlotWidget
 import time 
+
+import matplotlib.pyplot as plt
 import numpy as np
+import datetime
 
 class Main(QtGui.QMainWindow,Ui_MainWindow):
 	def __init__(self):
@@ -155,9 +160,11 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 		self.ui.GoXYStepY.clicked.connect(self.UpdateXYStepY)
 		self.ui.GoXYLengthX.clicked.connect(self.UpdateXYLengthX)
 		self.ui.GoXYLengthY.clicked.connect(self.UpdateXYLengthY)
-
+		#self.ui.XYSave.clicked.connect(self.XYSave)
+		
 		self._generator = None
 		self._timerId = None
+
 	
 	def startXYScan(self):  # Connect to Start-button clicked()
 		self.stop()  # Stop any existing timer
@@ -166,36 +173,54 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 	
 	def XYScan(self):
 		
-		xgrid = self.ui.XYPlot.GLGridItem()
-		ygrid = self.ui.XYPlot.GLGridItem()
-		zgrid = self.ui.XYPlot.GLGridItem()
-		self.ui.XYPlot.view.addItem(xgrid)
-		self.ui.XYPlot.view.addItem(ygrid)
-		self.ui.XYPlot.view.addItem(zgrid)
+		x = np.arange(float(XY_posX_init), float(XY_posX_init)+float(XYLengthX), float(XYStepX))
+		y = np.arange(float(XY_posY_init), float(XY_posY_init)+float(XYLengthY), float(XYStepY))
+		
+		print(x)
+		print(y)
+		
+		X, Y, = np.mgrid[int(XY_posX_init):int(XY_posX_init)+int(XYLengthX):int(XYStepX), int(XY_posY_init):int(XY_posY_init)+int(XYLengthY):int(XYStepY)]
 
-		data = dict([('xpos',[]), ('ypos',[]), ('R',[])])
-		for y in range(int(XY_posY_init), int(XY_posY_init)+int(XYLengthY), int(XYStepY)):
+		Z = np.zeros((len(y), len(x)))
+		#data = dict([('xpos',[]), ('ypos',[]), ('R',[])])
+		
+		ax = self.ui.canvas.figure.add_subplot(111)
+
+		for a in range(0, len(y)):
 			
-			XYscanner.write(("2PA"+str(int(y)*1e-3) + "\r").encode()) # set y position
+			XYscanner.write(("2PA"+str(y[a]*1e-3) + "\r").encode()) # set y position
 
-			for x in range(int(XY_posX_init), int(XY_posX_init)+int(XYLengthX), int(XYStepX)):
+			for b in range(0, len(x)):
 				
-				XYscanner.write(("1PA"+str(int(x)*1e-3) + "\r").encode()) # set x position
+				XYscanner.write(("1PA"+str(x[b]*1e-3) + "\r").encode()) # set x position
 				
-				time.sleep(1)
+				time.sleep(t_wait)
 				
 				out = daq.getSample('/%s/demods/%d/sample' % (device, demod_index))
 				out['R'] = np.abs(out['x'] + 1j*out['y']) # Calculate the magnitude R from x and y
 			
-				data['xpos'] =  data['xpos'] + [x] # add sample stage x pos to dict
-				data['ypos'] =  data['ypos'] + [y] # add sample stage y pos to dict
-				data['R'] =  data['R'] + [out['x'][0]] # add magnitude to data dict
+				#data['xpos'] =  data['xpos'] + [x] # add sample stage x pos to dict
+				#data['ypos'] =  data['ypos'] + [y] # add sample stage y pos to dict
+				#data['R'] =  data['R'] + [out['x'][0]] # add magnitude to data dict
 				
-				print(data)
+				Z[a,b] = out['R']
+				#print(data)
 				
-				#self.ui.XYPlot.image(data)
+				#print(Z)
+				ax.clear()
+				ax.pcolor(X,Y,Z)
+				self.ui.canvas.draw()
+
 				yield
-	
+				
+				
+			
+		#return X, Y, Z
+		print(Z)
+		currenttime = datetime.datetime.now()
+		filename = str(currenttime.hour) + str(currenttime.minute) + "-XYScan.txt"
+		np.savetxt(filename, Z, delimiter=',')
+
 	def UpdateXYLengthY(self): 
 		global XYLengthY
 		XYLengthY = self.ui.XYLengthY.text()
@@ -243,7 +268,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 		print("Scan step " + str(delay_step) + " steps")		
 	def UpdateTDwell(self): # Set dwell time (seconds)
 		global t_wait
-		t_wait = int(self.ui.TDwell.text())
+		t_wait = float(self.ui.TDwell.text())
 		print("Dwell time " + str(t_wait) + "s")	
 		
 	def TimeScan(self):
