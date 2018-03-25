@@ -141,8 +141,7 @@ print('Stage', XYscanner.read(XYscanner.in_waiting), 'Connected (AX3)')
 import sys
 from PyQt4 import QtCore, QtGui
 from Gui import Ui_MainWindow
-import pyqtgraph as pg
-from pyqtgraph import PlotWidget
+
 import time 
 
 import matplotlib.pyplot as plt
@@ -286,8 +285,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 	def startXYScan(self):  # Connect to Start-button clicked()
 		self.stop()  # Stop any existing timer
 		self._generator = self.XYScan()  # Start the loop
-		self._timerId = self.startTimer(0)   # This is the idle timer
-	
+		self._timerId = self.startTimer(0)   # This is the idle timer	
 	def XYScan(self): # Loop to run the XY scan (including collect and plot data)
 		
 		x = np.arange(float(XY_posX_init), float(XY_posX_init)+float(XYLengthX), float(XYStepX))
@@ -334,61 +332,51 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 			
 				
 			
-		#return X, Y, Z
 		print(Z)
 		currenttime = datetime.datetime.now()
 		filename = str(currenttime.hour) + str(currenttime.minute) + "-XYScan.txt"
-		np.savetxt(filename, Z, delimiter=',')
-		
+		np.savetxt(filename, Z, delimiter=',')	
+	
 	def UpdateDelayPos(self): # Set and move delay stage
 		DelayPos = self.ui.DelayPos.text()
 		klinger.write("PW" + str(DelayPos))
-		print("Delay stage initial position: " + str(delay_pos_init))		
-		
+		print("Delay stage initial position: " + str(delay_pos_init))				
 	def UpdateZPos(self): # set sample stage position in microns
 		global ZPos
 		ZPos = self.ui.ZPos.text()
 		XYscanner.write(("3PA"+str(int(ZPos)*1e-3) + "\r").encode())
-		print("Z position set to " + ZPos + " microns")
-			
+		print("Z position set to " + ZPos + " microns")			
 	def UpdateXYLengthY(self): 
 		global XYLengthY
 		XYLengthY = self.ui.XYLengthY.text()
-		print("XY scan Y length " + str(XYLengthY) + " mm")
-		
+		print("XY scan Y length " + str(XYLengthY) + " mm")		
 	def UpdateXYLengthX(self): 
 		global XYLengthX
 		XYLengthX = self.ui.XYLengthX.text()
-		print("XY scan X length " + str(XYLengthX) + " mm")
-		
+		print("XY scan X length " + str(XYLengthX) + " mm")	
 	def UpdateXYStepX(self): 
 		global XYStepX
 		XYStepX = self.ui.XYStepX.text()
 		print("XY scan X step " + str(XYStepX) + " mm")
-	
 	def UpdateXYStepY(self):
 		global XYStepY
 		XYStepY = self.ui.XYStepY.text()
-		print("XY scan Y step " + str(XYStepY) + " mm")
-	
+		print("XY scan Y step " + str(XYStepY) + " mm")	
 	def UpdateXYStartX(self):
 		global XY_posX_init
 		XY_posX_init = self.ui.XYStartX.text()
 		XYscanner.write(("1PA"+str(int(XY_posX_init)*1e-3) + "\r").encode())
-		print("X axis start position " + XY_posX_init)
-		
+		print("X axis start position " + XY_posX_init)		
 	def UpdateXYStartY(self):
 		global XY_posY_init
 		XY_posY_init = self.ui.XYStartY.text()
 		XYscanner.write(("2PA"+str(int(XY_posY_init)*1e-3) + "\r").encode())
-		print("Y axis start position " + XY_posY_init)	
-		
+		print("Y axis start position " + XY_posY_init)			
 	def UpdateTStart(self): # Set and move delay stage to initial position.
 		global delay_pos_init
 		delay_pos_init = self.ui.TScanStart.text()
 		klinger.write("PW" + str(delay_pos_init))
-		print("Delay stage initial position: " + str(delay_pos_init))		
-	
+		print("Delay stage initial position: " + str(delay_pos_init))
 	def UpdateTScanLength(self): # Set time scan length (in steps)
 		global delay_length
 		delay_length = int(self.ui.TScanLength.text())
@@ -403,34 +391,50 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 		print("Dwell time " + str(t_wait) + "s")	
 		
 	def TimeScan(self):
-		data = dict([('delay',[]),('R',[])])#, ('fft',[])]) # create empty dictionary with keys
-		for a in range(int(delay_pos_init),int(delay_pos_init)-int(delay_length),-int(delay_step)): # -, stage goes high to low.
+		
+		X = np.arange(float(delay_pos_init), float(delay_pos_init)-float(delay_length), -float(delay_step))
+		Y = np.zeros(len(X))
+		
+		ax = self.ui.TPlot.figure.add_subplot(211)
+		ax2 = self.ui.TPlot.figure.add_subplot(212)
+
+		for a in range(0, len(X)): # -, stage goes high to low.
 			
-			klinger.write("PW" + str(a)) # Send the position to the KLINGER
-			print("Delay stage at " + str(a) + " steps")
+			klinger.write("PW" + str(X[a])) # Send the position to the KLINGER
 			
 			time.sleep(t_wait) # wait for lock-in filter to settle 'integration time'
 			
 			out = daq.getSample('/%s/demods/%d/sample' % (device, demod_index))
-			out['R'] = np.abs(out['x'] + 1j*out['y']) # Calculate the magnitude R from x and y
+			out['r'] = np.abs(out['x'] + 1j*out['y']) # Calculate the magnitude R from x and y
 			
-			data['delay'] =  data['delay'] + [a] # add delay stage position to data dict
-			data['R'] =  data['R'] + [out['x'][0]] # add magnitude to data dict
+			if self.ui.TLockinX.isChecked() == True: # Select whether the plot is X or magnitude
+				Y[a] = out['x']
+			if self.ui.TLockinR.isChecked() == True:
+				Y[a] = out['r']
 			
-			print(data)
+			ax.clear()
+			ax.plot(X[0:a+1], Y[0:a+1])
 			
-			#self.ui.TPlot.sigTransformChanged.clear()
-			self.ui.TPlot.plot(data['delay'], data['R']) # plot time domain (stage position)
+			ax.set_xlabel('Time')
+			ax.set_ylabel('Lock-in output (V)')
 			
+			FFT = np.real(np.fft.fft(Y)) # Fourier transform
+
+			ax2.clear()
+			ax2.plot(X[0:a+1], FFT[0:a+1])
+				
+			ax2.set_xlabel('Arb')
+			ax2.set_ylabel('Magnitude')
 			
-			#data['fft'] = np.real(np.fft.fft(data['R'])) #fourier transform
-			
-			#self.ui.TFFTPlot.plot.clear()
-			#self.ui.TFFTPlot.plot(data['delay'], data['fft'])
-			#print(out) # print current lock-in values
+			self.ui.TPlot.draw()
+			self.ui.TPlot.flush_events() # Flush the plot drawing - makes sure the plot updates.
 			
 			yield # check if stop button has been pressed.
-
+		
+		currenttime = datetime.datetime.now()
+		filename = str(currenttime.hour) + str(currenttime.minute) + "-TWScan.txt"
+		np.savetxt(filename, Y, delimiter=',')
+	
 	def startTScan(self):  # Connect to Start-button clicked()
 		self.stop()  # Stop any existing timer
 		self._generator = self.TimeScan()  # Start the loop

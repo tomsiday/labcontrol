@@ -109,6 +109,27 @@
             </property>
            </widget>
           </item>
+          <item row="10" column="1">
+           <widget class="QRadioButton" name="TLockinR">
+            <property name="text">
+             <string>Magnitude</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="1">
+           <widget class="QRadioButton" name="TLockinX">
+            <property name="text">
+             <string>X</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="QLabel" name="label_22">
+            <property name="text">
+             <string>Lock-in output</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>
