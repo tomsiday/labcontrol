@@ -25,6 +25,8 @@ XYStepY = 10 #um
 XYLengthX = 100 #um
 XYLengthY = 100 #um
 
+XorR = 'x' # Display X or R
+
 ##################################################################
 ### Initialise the KLinGER MC4 motion controller (delay stage) ###
 ##################################################################
@@ -71,11 +73,11 @@ time_constant = 0.3
 osc_frequency = 32369.665
 # Initial settings for THz time domain experiments.
 exp_setting = [['/%s/sigins/%d/ac'             % (device, in_channel), 0],
-                   ['/%s/sigins/%d/ac'             % (device, in_channel), 0], # Set AC coupling (no)
+                   ['/%s/sigins/%d/ac'             % (device, in_channel), 1], # Set AC coupling (yes)
 				   ['/%s/sigins/%d/imp50'          % (device, in_channel), 0], # Use 10Mohm impedance
 				   ['/%s/sigins/%d/diff'           % (device, in_channel), 1], # Differential input
 				   ['/%s/sigins/%d/float'           % (device, in_channel), 0], # Float off
-                   ['/%s/sigins/%d/range'          % (device, in_channel), 0.3], # Range setting
+                   ['/%s/sigins/%d/range'          % (device, in_channel), 0.03], # Range setting
                    ['/%s/demods/%d/enable'         % (device, demod_index), 1], # Enable demod 0
                    ['/%s/demods/%d/rate'           % (device, demod_index), demod_rate], # Set data transfer rate to PC \(dont really know why this matters)
                    ['/%s/demods/%d/adcselect'      % (device, demod_index), in_channel], # Set input channel for demod 0
@@ -100,7 +102,7 @@ daq.sync()
 ########################################################################
 import serial
 # Initialise ESP301 serial connection
-XYscanner = serial.Serial('COM14', baudrate=921600, rtscts=True)
+XYscanner = serial.Serial('COM2', baudrate=921600, rtscts=True)
 # Flush and reset serial buffers
 XYscanner.flush()
 XYscanner.reset_input_buffer()
@@ -160,7 +162,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 		self.ui.GoXYStepY.clicked.connect(self.UpdateXYStepY)
 		self.ui.GoXYLengthX.clicked.connect(self.UpdateXYLengthX)
 		self.ui.GoXYLengthY.clicked.connect(self.UpdateXYLengthY)
-		#self.ui.XYSave.clicked.connect(self.XYSave)
+		self.ui.GoXorR.clicked.connect(self.UpdateXorR)
 		
 		self._generator = None
 		self._timerId = None
@@ -182,7 +184,6 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 		X, Y, = np.mgrid[int(XY_posX_init):int(XY_posX_init)+int(XYLengthX):int(XYStepX), int(XY_posY_init):int(XY_posY_init)+int(XYLengthY):int(XYStepY)]
 
 		Z = np.zeros((len(y), len(x)))
-		#data = dict([('xpos',[]), ('ypos',[]), ('R',[])])
 		
 		ax = self.ui.canvas.figure.add_subplot(111)
 
@@ -197,22 +198,19 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 				time.sleep(t_wait)
 				
 				out = daq.getSample('/%s/demods/%d/sample' % (device, demod_index))
-				out['R'] = np.abs(out['x'] + 1j*out['y']) # Calculate the magnitude R from x and y
-			
-				#data['xpos'] =  data['xpos'] + [x] # add sample stage x pos to dict
-				#data['ypos'] =  data['ypos'] + [y] # add sample stage y pos to dict
-				#data['R'] =  data['R'] + [out['x'][0]] # add magnitude to data dict
+				out['r'] = np.abs(out['x'] + 1j*out['y']) # Calculate the magnitude R from x and y	
 				
-				Z[a,b] = out['R']
-				#print(data)
+				if XorR == 'x':
+					Z[b,a] = out['x']
+				if XorR == 'r':
+					Z[b,a] = out['r']
 				
-				#print(Z)
 				ax.clear()
 				ax.pcolor(X,Y,Z)
 				self.ui.canvas.draw()
-
+				self.ui.canvas.flush_events() # Flush the plot drawing - makes sure the plot updates.
 				yield
-				
+			
 				
 			
 		#return X, Y, Z
@@ -220,7 +218,12 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 		currenttime = datetime.datetime.now()
 		filename = str(currenttime.hour) + str(currenttime.minute) + "-XYScan.txt"
 		np.savetxt(filename, Z, delimiter=',')
-
+		
+	def UpdateXorR(self):
+		global XorR
+		XorR = self.ui.XYXorR.text()
+		print("Measuring " + XorR)
+			
 	def UpdateXYLengthY(self): 
 		global XYLengthY
 		XYLengthY = self.ui.XYLengthY.text()

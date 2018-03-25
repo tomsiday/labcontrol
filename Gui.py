@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Gui.ui'
+# Form implementation generated from reading ui file 'gui.ui'
 #
 # Created by: PyQt4 UI code generator 4.11.4
 #
@@ -85,7 +85,7 @@ class Ui_MainWindow(object):
         self.GoTScanStart.setObjectName(_fromUtf8("GoTScanStart"))
         self.gridLayout_5.addWidget(self.GoTScanStart, 1, 4, 1, 1)
         self.horizontalLayout_2.addLayout(self.gridLayout_5)
-        self.TFFTPlot = PlotWidget(self.TimeScanTab)
+        self.TFFTPlot = Canvas(self.TimeScanTab)
         self.TFFTPlot.setEnabled(True)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(1)
@@ -95,7 +95,7 @@ class Ui_MainWindow(object):
         self.TFFTPlot.setObjectName(_fromUtf8("TFFTPlot"))
         self.horizontalLayout_2.addWidget(self.TFFTPlot)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
-        self.TPlot = PlotWidget(self.TimeScanTab)
+        self.TPlot = Canvas(self.TimeScanTab)
         self.TPlot.setObjectName(_fromUtf8("TPlot"))
         self.verticalLayout.addWidget(self.TPlot)
         self.Tabs.addTab(self.TimeScanTab, _fromUtf8(""))
@@ -122,6 +122,9 @@ class Ui_MainWindow(object):
         self.GoXYStartX = QtGui.QPushButton(self.XYApTab)
         self.GoXYStartX.setObjectName(_fromUtf8("GoXYStartX"))
         self.formLayout_2.setWidget(2, QtGui.QFormLayout.FieldRole, self.GoXYStartX)
+        self.label_11 = QtGui.QLabel(self.XYApTab)
+        self.label_11.setObjectName(_fromUtf8("label_11"))
+        self.formLayout_2.setWidget(3, QtGui.QFormLayout.LabelRole, self.label_11)
         self.XYStartY = QtGui.QLineEdit(self.XYApTab)
         self.XYStartY.setObjectName(_fromUtf8("XYStartY"))
         self.formLayout_2.setWidget(3, QtGui.QFormLayout.FieldRole, self.XYStartY)
@@ -164,12 +167,15 @@ class Ui_MainWindow(object):
         self.GoXYLengthY = QtGui.QPushButton(self.XYApTab)
         self.GoXYLengthY.setObjectName(_fromUtf8("GoXYLengthY"))
         self.formLayout_2.setWidget(12, QtGui.QFormLayout.FieldRole, self.GoXYLengthY)
-        self.label_11 = QtGui.QLabel(self.XYApTab)
-        self.label_11.setObjectName(_fromUtf8("label_11"))
-        self.formLayout_2.setWidget(3, QtGui.QFormLayout.LabelRole, self.label_11)
-        self.XYSave = QtGui.QPushButton(self.XYApTab)
-        self.XYSave.setObjectName(_fromUtf8("XYSave"))
-        self.formLayout_2.setWidget(13, QtGui.QFormLayout.FieldRole, self.XYSave)
+        self.GoXorR = QtGui.QPushButton(self.XYApTab)
+        self.GoXorR.setObjectName(_fromUtf8("GoXorR"))
+        self.formLayout_2.setWidget(14, QtGui.QFormLayout.FieldRole, self.GoXorR)
+        self.XYXorR = QtGui.QLineEdit(self.XYApTab)
+        self.XYXorR.setObjectName(_fromUtf8("XYXorR"))
+        self.formLayout_2.setWidget(13, QtGui.QFormLayout.FieldRole, self.XYXorR)
+        self.label_12 = QtGui.QLabel(self.XYApTab)
+        self.label_12.setObjectName(_fromUtf8("label_12"))
+        self.formLayout_2.setWidget(13, QtGui.QFormLayout.LabelRole, self.label_12)
         self.horizontalLayout_3.addLayout(self.formLayout_2)
         self.canvas = Canvas(self.XYApTab)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
@@ -192,6 +198,15 @@ class Ui_MainWindow(object):
         self.DelayPos = QtGui.QLineEdit(self.centralwidget)
         self.DelayPos.setObjectName(_fromUtf8("DelayPos"))
         self.gridLayout_6.addWidget(self.DelayPos, 0, 3, 1, 1)
+        self.ZPos = QtGui.QLineEdit(self.centralwidget)
+        self.ZPos.setObjectName(_fromUtf8("ZPos"))
+        self.gridLayout_6.addWidget(self.ZPos, 0, 5, 1, 1)
+        self.label_13 = QtGui.QLabel(self.centralwidget)
+        self.label_13.setObjectName(_fromUtf8("label_13"))
+        self.gridLayout_6.addWidget(self.label_13, 0, 4, 1, 1)
+        self.GoZPos = QtGui.QPushButton(self.centralwidget)
+        self.GoZPos.setObjectName(_fromUtf8("GoZPos"))
+        self.gridLayout_6.addWidget(self.GoZPos, 0, 6, 1, 1)
         self.gridLayout.addLayout(self.gridLayout_6, 1, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
@@ -229,6 +244,7 @@ class Ui_MainWindow(object):
         self.XYStopBut.setText(_translate("MainWindow", "STOP!", None))
         self.label_6.setText(_translate("MainWindow", "Scan start (X) (um):", None))
         self.GoXYStartX.setText(_translate("MainWindow", "Go", None))
+        self.label_11.setText(_translate("MainWindow", "Scan start (Y) (um):", None))
         self.GoXYStartY.setText(_translate("MainWindow", "Go", None))
         self.label_7.setText(_translate("MainWindow", "Step (X) (um):", None))
         self.GoXYStepX.setText(_translate("MainWindow", "Set", None))
@@ -238,16 +254,17 @@ class Ui_MainWindow(object):
         self.GoXYLengthX.setText(_translate("MainWindow", "Set", None))
         self.label_10.setText(_translate("MainWindow", "Length (Y) (um):", None))
         self.GoXYLengthY.setText(_translate("MainWindow", "Set", None))
-        self.label_11.setText(_translate("MainWindow", "Scan start (Y) (um):", None))
-        self.XYSave.setText(_translate("MainWindow", "Save Last", None))
+        self.GoXorR.setText(_translate("MainWindow", "Set", None))
+        self.label_12.setText(_translate("MainWindow", "X or R (default X)", None))
         self.Tabs.setTabText(self.Tabs.indexOf(self.XYApTab), _translate("MainWindow", "XY (aperture)", None))
         self.Tabs.setTabText(self.Tabs.indexOf(self.MFSetTab), _translate("MainWindow", "MFLI Settings", None))
         self.label_5.setText(_translate("MainWindow", "Move delay stage to:", None))
+        self.label_13.setText(_translate("MainWindow", "Move Z to", None))
+        self.GoZPos.setText(_translate("MainWindow", "Go", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.actionQuit.setText(_translate("MainWindow", "Quit..", None))
 
 from canvas import Canvas
-from pyqtgraph import PlotWidget
 
 if __name__ == "__main__":
     import sys
