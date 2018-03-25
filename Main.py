@@ -27,6 +27,16 @@ XYLengthY = 100 #um
 
 XorR = 'x' # Display X or R
 
+## Initial XT scan parameters
+
+XT_pos_space_init = 0
+XTStepSpace = 10
+XTLengthSpace = 100
+
+XT_pos_time_init = 0
+XTStepTime = 10
+XTLengthTime = 100
+
 ##################################################################
 ### Initialise the KLinGER MC4 motion controller (delay stage) ###
 ##################################################################
@@ -162,18 +172,123 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 		self.ui.GoXYStepY.clicked.connect(self.UpdateXYStepY)
 		self.ui.GoXYLengthX.clicked.connect(self.UpdateXYLengthX)
 		self.ui.GoXYLengthY.clicked.connect(self.UpdateXYLengthY)
-		self.ui.GoXorR.clicked.connect(self.UpdateXorR)
+		self.ui.GoZPos.clicked.connect(self.UpdateZPos) # Set the sample stage position in Z
+		self.ui.GoDelayPos.clicked.connect(self.UpdateDelayPos) # set position of delay stage
+		
+		self.ui.XTStartBut.clicked.connect(self.startXTScan) # Start the XT scan
+		self.ui.XTStopBut.clicked.connect(self.stop) # Stop the XT scan
+		self.ui.GoXTStartSpace.clicked.connect(self.UpdateXTStartSpace) # update XT scan start position (instant)
+		self.ui.GoXTStepSpace.clicked.connect(self.UpdateXTStepSpace) # update XT scan step in space
+		self.ui.GoXTLengthSpace.clicked.connect(self.UpdateXTLengthSpace) # set length of XT scan (space) on click
+		self.ui.GoXTStartTime.clicked.connect(self.UpdateXTStartTime) # set XT scan time start (instant)
+		self.ui.GoXTStepTime.clicked.connect(self.UpdateXTStepTime) # set XT time step
+		self.ui.GoXTLengthTime.clicked.connect(self.UpdateXTLengthTime) # set XT time length
+		
 		
 		self._generator = None
 		self._timerId = None
 
+	def UpdateXTStartSpace(self):
+		global XT_pos_space_init
+		XT_pos_space_init = self.ui.XTStartSpace.text()
+		if self.ui.ScanAlongY.isChecked() == True:
+			XYscanner.write(("2PA"+str(int(XT_pos_space_init)*1e-3) + "\r").encode())
+		if self.ui.ScanAlongX.isChecked() == True:
+			XYscanner.write(("1PA"+str(int(XT_pos_space_init)*1e-3) + "\r").encode())
+		
+		print("X axis start position " + XT_pos_space_init)
+		
+	def UpdateXTStepSpace(self): 
+		global XTStepSpace
+		XTStepSpace = self.ui.XTStepSpace.text()
+		print("XT scan space step " + str(XTStepSpace) + " mm")
+		
+	def UpdateXTLengthSpace(self): 
+		global XTLengthSpace
+		XTLengthSpace = self.ui.XTLengthSpace.text()
+		print("XT scan space length " + str(XTLengthSpace) + " mm")
+		
+	def UpdateXTStartTime(self): # Set and move delay stage to initial position.
+		global XT_pos_time_init
+		XT_pos_time_init = self.ui.XTStartTime.text()
+		klinger.write("PW" + str(XT_pos_time_init))
+		print("Delay stage initial position: " + str(XT_pos_time_init))		
+		
+	def UpdateXTStepTime(self):
+		global XTStepTime
+		XTStepTime = self.ui.XTStepTime.text()
+		print("XT scan time step " + str(XTStepTime))
+		
+	def UpdateXTLengthTime(self): 
+		global XTLengthTime
+		XTLengthTime = self.ui.XTLengthTime.text()
+		print("XT scan time length " + str(XTLengthTime))
+		
+	def startXTScan(self):  # Connect to Start-button clicked()
+		self.stop()  # Stop any existing timer
+		self._generator = self.XTScan()  # Start the loop
+		self._timerId = self.startTimer(0)   # This is the idle timer
+		
+	def XTScan(self): # Loop to run the XT scan (including collect and plot data)
+		
+		xy = np.arange(float(XT_pos_space_init), float(XT_pos_space_init)+float(XTLengthSpace), float(XTStepSpace))
+		t = np.arange(float(XT_pos_time_init), float(XT_pos_time_init)-float(XTLengthTime), -float(XTStepTime))
+		
+		print(xy)
+		print(t)
+		
+		X, T, = np.mgrid[int(XT_pos_space_init):int(XT_pos_space_init)+int(XTLengthSpace):int(XTStepSpace), int(XT_pos_time_init):int(XT_pos_time_init)+int(XTLengthTime):int(XTStepTime)]
+
+		Z = np.zeros((len(t), len(xy)))
+		
+		ax = self.ui.XTPlot.figure.add_subplot(111)
+		
+		for a in range(0, len(t)):
+			
+			klinger.write("PW" + str(t[a]))
+			
+			for b in range(0, len(xy)):
+				
+				if self.ui.ScanAlongY.isChecked() == True: # Scan changes y values (channel 2)
+					
+					XYscanner.write(("2PA"+str(xy[b]*1e-3) + "\r").encode()) # set y position
+				
+				if self.ui.ScanAlongX.isChecked() == True: # Scan changes x values (channel 2)
+					
+					XYscanner.write(("1PA"+str(xy[b]*1e-3) + "\r").encode()) # set x position
+				
+				time.sleep(t_wait)
+				
+				out = daq.getSample('/%s/demods/%d/sample' % (device, demod_index))
+				out['r'] = np.abs(out['x'] + 1j*out['y']) # Calculate the magnitude R from x and y	
+				
+				if self.ui.XTLockinX.isChecked() == True: # Select whether the plot is X or magnitude
+					Z[b,a] = out['x']
+				if self.ui.XTLockinR.isChecked() == True:
+					Z[b,a] = out['r']
+				
+				ax.clear()
+				ax.pcolor(X,T,Z)
+				
+				ax.set_xlabel('X (microns)')
+				ax.set_ylabel('time')
+				
+				self.ui.XTPlot.draw()
+				self.ui.XTPlot.flush_events() # Flush the plot drawing - makes sure the plot updates.
+				yield	
+				
+		print(Z)
+		currenttime = datetime.datetime.now()
+		filename = str(currenttime.hour) + str(currenttime.minute) + "-XTScan.txt"
+		np.savetxt(filename, Z, delimiter=',')
+		
 	
 	def startXYScan(self):  # Connect to Start-button clicked()
 		self.stop()  # Stop any existing timer
 		self._generator = self.XYScan()  # Start the loop
 		self._timerId = self.startTimer(0)   # This is the idle timer
 	
-	def XYScan(self):
+	def XYScan(self): # Loop to run the XY scan (including collect and plot data)
 		
 		x = np.arange(float(XY_posX_init), float(XY_posX_init)+float(XYLengthX), float(XYStepX))
 		y = np.arange(float(XY_posY_init), float(XY_posY_init)+float(XYLengthY), float(XYStepY))
@@ -185,8 +300,9 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 
 		Z = np.zeros((len(y), len(x)))
 		
-		ax = self.ui.canvas.figure.add_subplot(111)
+		ax = self.ui.XYPlot.figure.add_subplot(111)
 
+		
 		for a in range(0, len(y)):
 			
 			XYscanner.write(("2PA"+str(y[a]*1e-3) + "\r").encode()) # set y position
@@ -200,15 +316,20 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 				out = daq.getSample('/%s/demods/%d/sample' % (device, demod_index))
 				out['r'] = np.abs(out['x'] + 1j*out['y']) # Calculate the magnitude R from x and y	
 				
-				if XorR == 'x':
+				if self.ui.XYLockinX.isChecked() == True: # Select whether the plot is X or magnitude
 					Z[b,a] = out['x']
-				if XorR == 'r':
+				if self.ui.XYLockinR.isChecked() == True:
 					Z[b,a] = out['r']
-				
+					
 				ax.clear()
 				ax.pcolor(X,Y,Z)
-				self.ui.canvas.draw()
-				self.ui.canvas.flush_events() # Flush the plot drawing - makes sure the plot updates.
+				ax.set_xlabel('x (microns)')
+				ax.set_ylabel('y (microns)')
+				
+				self.ui.XYPlot.draw()
+				
+				self.ui.XYPlot.flush_events() # Flush the plot drawing - makes sure the plot updates.
+				
 				yield
 			
 				
@@ -219,10 +340,16 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 		filename = str(currenttime.hour) + str(currenttime.minute) + "-XYScan.txt"
 		np.savetxt(filename, Z, delimiter=',')
 		
-	def UpdateXorR(self):
-		global XorR
-		XorR = self.ui.XYXorR.text()
-		print("Measuring " + XorR)
+	def UpdateDelayPos(self): # Set and move delay stage
+		DelayPos = self.ui.DelayPos.text()
+		klinger.write("PW" + str(DelayPos))
+		print("Delay stage initial position: " + str(delay_pos_init))		
+		
+	def UpdateZPos(self): # set sample stage position in microns
+		global ZPos
+		ZPos = self.ui.ZPos.text()
+		XYscanner.write(("3PA"+str(int(ZPos)*1e-3) + "\r").encode())
+		print("Z position set to " + ZPos + " microns")
 			
 	def UpdateXYLengthY(self): 
 		global XYLengthY
@@ -261,6 +388,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow):
 		delay_pos_init = self.ui.TScanStart.text()
 		klinger.write("PW" + str(delay_pos_init))
 		print("Delay stage initial position: " + str(delay_pos_init))		
+	
 	def UpdateTScanLength(self): # Set time scan length (in steps)
 		global delay_length
 		delay_length = int(self.ui.TScanLength.text())
