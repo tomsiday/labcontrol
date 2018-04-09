@@ -21,8 +21,8 @@ Files in this repository
      7. PyQt4
      
      8. datetime
-    
-    it also requires a python libary from zurich instruments for the MFLI lockin amplifier. availible https://www.zhinst.com/downloads. download precompiled for the correct python version and system. This appplication is based on 17.06 at the momen
+ 
+ it also requires a python libary from zurich instruments for the MFLI lockin amplifier. availible https://www.zhinst.com/downloads. download precompiled for the correct python version and system. This appplication is based on 17.06 at the momen
  
  canvas.py - a short file used to inlude matplotlib plots within the PyQt4 gui framework
  
