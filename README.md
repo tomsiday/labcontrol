@@ -35,5 +35,5 @@ Controls the lab equipment in the UCL Ultrafast Laser Lab (room 910).
  
 -  `__pycache__` - for bytecode compiled files (automatic, standard)
  
-- *Date files* - raw data. Will be stored here as long as this repository is private. To be deleted if repository made public.
+- *Date files* - raw data. Will be stored here as long as this repo is private. To be deleted if repo made public.
       
