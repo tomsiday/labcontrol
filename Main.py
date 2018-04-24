@@ -121,7 +121,7 @@ daq.sync()
 ########################################################################
 import serial # python library for serial connections
 # Initialise ESP301 serial connection
-XYscanner = serial.Serial('COM2', baudrate=921600, rtscts=True)
+XYscanner = serial.Serial('COM10', baudrate=921600, rtscts=True)
 
 # Flush and reset serial buffers (why not..)
 XYscanner.flush()
