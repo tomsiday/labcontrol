@@ -46,17 +46,17 @@ XTLengthTime = 100 # scan length (time)
 import visa # For GPIB communications
 
 rm = visa.ResourceManager() # load up the pyvisa manager
-print(rm.list_resources()) #print the availible devices KLINGER IS GPIB::8 (for now).
-klinger = rm.open_resource('GPIB0::8::INSTR') # 'open' klinger stage
+print(rm.list_resources()) #print the available devices KLINGER IS GPIB::8 (for now).
+klinger = rm.open_resource('GPIB0::8::INSTR') # 'open' Klinger stage
 
-klinger.write_termination = '\r' # Set the EOL termination (otherwise the klinger stage won't communicate nicely)
+klinger.write_termination = '\r' # Set the EOL termination (otherwise the Klinger stage won't communicate nicely)
 klinger.read_termination = '\r'
 
 ##############################################
 ### Initialise the Zurich instruments MFLI ###
 ##############################################
-import zhinst.utils # import the zurich instruments python libary
-import numpy as np # import numpy python libary
+import zhinst.utils # import the Zurich instruments python library
+import numpy as np # import numpy python library
 import time # for time.sleep
 
 device_id = 'dev3047' # Serial number of our MFLI
@@ -66,8 +66,8 @@ apilevel = 6 # API level in the 17,06 release from ZI. (probably not a good idea
 # Create a session (daq) for communication with the MFLI. device is the serial number, and props is a load of useful info about the session
 (daq, device, props) = zhinst.utils.create_api_session(device_id, apilevel, required_devtype='.*LI|.*IA|.*IS')
 
-# check out api versions align (incase the MFLI firmware, or PC libary is updated above 17.06)
-# If this is False, both should be changed to the same version (preferebly kept at 17.06 unless new features are required)
+# check out API versions align (in case the MFLI firmware, or PC library is updated above 17.06)
+# If this is False, both should be changed to the same version (preferably kept at 17.06 unless new features are required)
 print('PC and MFLI API version align?:', zhinst.utils.api_server_version_check(daq))
 
 # Base config for MFLI -- disable everything
@@ -82,14 +82,14 @@ daq.set(general_setting)
 # SYNC (make sure PC and MFLI have communicated settings, etc...)
 daq.sync()
 
-## Configure the MFLI for streaming data - these are all standard settings, availible in the MFLI manual (and in exp_setting below)
+## Configure the MFLI for streaming data - these are all standard settings, available in the MFLI manual (and in exp_setting below)
 out_channel = 0 
 out_mixer_channel = zhinst.utils.default_output_mixer_channel(props)
 in_channel = 0 # Signal in from preamp (+V)
 demod_index = 0 # which demodulator to use
 osc_index = 0 # which oscillator ot use
-demod_rate = 1e3 # data transfer rate for the selectred demodulator
-time_constant = 0.3 # lockin time constant, t_c (seconds)
+demod_rate = 1e3 # data transfer rate for the selected demodulator
+time_constant = 0.3 # Lock-in time constant, t_c (seconds)
 osc_frequency = 32369.665 # frequency set for oscillator (if not using external reference)
 # Initial settings for THz time domain experiments.
 exp_setting = [['/%s/sigins/%d/ac'             % (device, in_channel), 1], # Set AC coupling (yes)
@@ -101,11 +101,11 @@ exp_setting = [['/%s/sigins/%d/ac'             % (device, in_channel), 1], # Set
                    ['/%s/demods/%d/rate'           % (device, demod_index), demod_rate], # Set data transfer rate to PC \(dont really know why this matters)
                    ['/%s/demods/%d/adcselect'      % (device, demod_index), in_channel], # Set input channel for demod 0
                    ['/%s/demods/%d/order'          % (device, demod_index), 4], # Set filter order for demod 0 
-                   ['/%s/demods/%d/timeconstant'   % (device, demod_index), time_constant], # Set filter time contstant
+                   ['/%s/demods/%d/timeconstant'   % (device, demod_index), time_constant], # Set filter time constant
                    ['/%s/demods/%d/oscselect'      % (device, demod_index), osc_index], # Set oscillator for demod 0 (we only have 1)
-                   ['/%s/demods/%d/harmonic'       % (device, demod_index), 1], # Set harmonic for mesurement
+                   ['/%s/demods/%d/harmonic'       % (device, demod_index), 1], # Set harmonic for measurement
                    ['/%s/extrefs/0/enable'         % (device), 1], # Set external reference on/off (optical chopper)
-					#['/%s/oscs/1/freq'         % (device), osc_frequency]] # set oscilator frequency
+					#['/%s/oscs/1/freq'         % (device), osc_frequency]] # set oscillator frequency
 ['/%s/demods/1/adcselect'       % (device), 8]] # Select the input for the external reference
 # set the above settings on the MFLI
 daq.set(exp_setting)
@@ -119,7 +119,7 @@ daq.sync()
 ########################################################################
 ### Initialise the ESP301 motion controller for aperture experiments ###
 ########################################################################
-import serial # python libary for serial connections
+import serial # python library for serial connections
 # Initialise ESP301 serial connection
 XYscanner = serial.Serial('COM2', baudrate=921600, rtscts=True)
 
@@ -153,24 +153,24 @@ print('Stage', XYscanner.read(XYscanner.in_waiting), 'Connected (AX3)')
 ###### Gui display, callback functions (including run loops, e.g. the xy and time scans.) ######
 ################################################################################################
 
-import sys # python libary of system specific parameters and functions
+import sys # python library of system specific parameters and functions
 from PyQt4 import QtCore, QtGui # import pyqt4, the GUI interface.
 from Gui import Ui_MainWindow # Gui is the python file containing this interface.
 import matplotlib.pyplot as plt # matplotlib pyplot for plotting in program.
 import datetime # gives us date and time (for saving files mainly)
 
-class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
+class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 GUI window class.
 	def __init__(self):
-		QtGui.QMainWindow.__init__(self) # set up the gui (all standard commands for creating pyqt guis)
+		QtGui.QMainWindow.__init__(self) # set up the GUI (all standard commands for creating pyqt guis)
 		self.ui= Ui_MainWindow()
 		self.ui.setupUi(self)
 		
-		## List of commands (functions) to run when various  gui interactions are made (such as clicking buttons, etc..)
+		## List of commands (functions) to run when various GUI interactions are made (such as clicking buttons, etc..)
 		# Time domain (TDS) tab
 		self.ui.TStart.clicked.connect(self.startTScan) # start button
 		self.ui.TStop.clicked.connect(self.stop) # stop button
 		self.ui.GoTScanStart.clicked.connect(self.UpdateTStart) # set start time button
-		self.ui.GoTScanLength.clicked.connect(self.UpdateTScanLength) # set scan length button	
+		self.ui.GoTScanLength.clicked.connect(self.UpdateTScanLength) # set scan length button
 		self.ui.GoTStep.clicked.connect(self.UpdateTStep) # set scan step button
 		self.ui.GoTDwell.clicked.connect(self.UpdateTDwell) #  set dwell time button
 		
@@ -219,8 +219,8 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 		
 	def UpdateXTLengthSpace(self): # set the XT scan length (space)
 		global XTLengthSpace # import global variable
-		XTLengthSpace = self.ui.XTLengthSpace.text() # set from imput box
-		print("XT scan space length " + str(XTLengthSpace) + " mm") # print confirmation of pararmeter set
+		XTLengthSpace = self.ui.XTLengthSpace.text() # set from input box
+		print("XT scan space length " + str(XTLengthSpace) + " mm") # print confirmation of parameter set
 		
 	def UpdateXTStartTime(self): # Set and move delay stage to initial position for XT scan
 		global XT_pos_time_init # import global variable
@@ -234,8 +234,8 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 		print("XT scan time step " + str(XTStepTime)) # confirm change of parameter
 		
 	def UpdateXTLengthTime(self): # set the XT scan length (time)
-		global XTLengthTime # import gloabl variable
-		XTLengthTime = self.ui.XTLengthTime.text() # set from imput box
+		global XTLengthTime # import global variable
+		XTLengthTime = self.ui.XTLengthTime.text() # set from input box
 		print("XT scan time length " + str(XTLengthTime)) # print confirmation of parameter change
 		
 	def startXTScan(self):  # start the xt scan
@@ -284,10 +284,10 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 				if self.ui.XTLockinX.isChecked() == True: # decide if we want magnitude or x shown on plot (and saved)
 					Z[b,a] = out['x'] # put the lockin value into the data array
 				if self.ui.XTLockinR.isChecked() == True:
-					Z[b,a] = out['r'] # put the lockin value into the data array
+					Z[b,a] = out['r'] # put the lock-in value into the data array
 				
 				ax.clear() # clear the axis (might help for speed)
-				ax.pcolor(X,T,Z) # color plot
+				ax.pcolor(X,T,Z) # colour plot
 				
 				ax.set_xlabel('X (microns)') # draw axis labels
 				ax.set_ylabel('time') # draw axis labels
@@ -295,14 +295,14 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 				self.ui.XTPlot.draw() # draw the plot
 				self.ui.XTPlot.flush_events() # Flush the plot drawing - makes sure the plot updates (it can sometimes skip a loop if this isnt done)
 				
-				# TODO: find an efficient way to do this plotting (doesnt realy matter at this update rate (~1s))
+				# TODO: find an efficient way to do this plotting (doesn't really matter at this update rate (~1s))
 				yield # is the timer/generator still running (i.e. has stop been pressed) this stops the app from locking up
 				
 		print(Z) # print the final dataset
 		currenttime = datetime.datetime.now() # grab the time for the filename
 		filename = str(currenttime.hour) + str(currenttime.minute) + "-XTScan.txt" # generate the filename string
 		np.savetxt(filename, Z, delimiter=',') # save the data (Z only for now)
-		# TODO: add the x and y values, and experiment parameters in a seperate file or header
+		# TODO: add the x and y values, and experiment parameters in a separate file or header
 		
 	
 	def startXYScan(self):  # Connect to Start-button clicked()
@@ -322,7 +322,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 		# create meshgrid for plotting (check numpy/pyplot docs for details)
 		X, Y, = np.mgrid[int(XY_posX_init):int(XY_posX_init)+int(XYLengthX):int(XYStepX), int(XY_posY_init):int(XY_posY_init)+int(XYLengthY):int(XYStepY)]
 		
-		Z = np.zeros((len(y), len(x))) # initialide empty array for lockin data
+		Z = np.zeros((len(y), len(x))) # initialize empty array for lock-in data
 		
 		ax = self.ui.XYPlot.figure.add_subplot(111) # add plot in the correct window of the XY scan tab
 
@@ -366,12 +366,12 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 	def UpdateDelayPos(self): # Set and move delay stage (global control)
 		DelayPos = self.ui.DelayPos.text() # get the value in box - don't need global variable for this
 		klinger.write("PW" + str(DelayPos)) # move the delay stage
-		print("Delay stage initial position: " + str(delay_pos_init)) # roint stage move confirmation			
+		print("Delay stage initial position: " + str(delay_pos_init)) # print stage move confirmation
 	def UpdateZPos(self): # set sample stage position in microns along beam axis (z)
 		global ZPos # import global variable
 		ZPos = self.ui.ZPos.text() # set from input box
 		XYscanner.write(("3PA"+str(int(ZPos)*1e-3) + "\r").encode()) # move sample stage (z)
-		print("Z position set to " + ZPos + " microns") # print stage move confimation
+		print("Z position set to " + ZPos + " microns") # print stage move confirmation
 	def UpdateXYLengthY(self):  # set length of xy scan in Y
 		global XYLengthY # import global variable
 		XYLengthY = self.ui.XYLengthY.text() # get value from input box
@@ -383,7 +383,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 	def UpdateXYStepX(self): # set XY scan step in X
 		global XYStepX # import global variable
 		XYStepX = self.ui.XYStepX.text() # get value from input box
-		print("XY scan X step " + str(XYStepX) + " mm") # print confitmation of parameter set
+		print("XY scan X step " + str(XYStepX) + " mm") # print confirmation of parameter set
 	def UpdateXYStepY(self): # set XY scan step in Y
 		global XYStepY # import global variable
 		XYStepY = self.ui.XYStepY.text() # get value from input box
@@ -392,7 +392,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 		global XY_posX_init # import global variable
 		XY_posX_init = self.ui.XYStartX.text() # get value from input box
 		XYscanner.write(("1PA"+str(int(XY_posX_init)*1e-3) + "\r").encode()) # move the sample to this position (x)
-		print("X axis start position " + XY_posX_init) # print confitmation of parameter seet and move
+		print("X axis start position " + XY_posX_init) # print confirmation of parameter set and move
 	def UpdateXYStartY(self): # set and go to xy scan start position (y)
 		global XY_posY_init # import global variable
 		XY_posY_init = self.ui.XYStartY.text() # get value form input box
@@ -420,13 +420,13 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 		
 	def TimeScan(self): # loop for time scan
 		
-		# create aray of delay stage values
+		# create array of delay stage values
 		X = np.arange(float(delay_pos_init), float(delay_pos_init)-float(delay_length), -float(delay_step))
 		# initialise array of zeros for output data
 		Y = np.zeros(len(X))
 		
 		ax = self.ui.TPlot.figure.add_subplot(211) # subplot for time domain scan
-		ax2 = self.ui.TPlot.figure.add_subplot(212) # subplot for live fourier transform
+		ax2 = self.ui.TPlot.figure.add_subplot(212) # subplot for live Fourier transform
 
 		for a in range(0, len(X)): # loop with length = number of points in scan
 			
@@ -462,7 +462,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 			yield # check if stop button has been pressed.
 		
 		currenttime = datetime.datetime.now() # get time for filename
-		filename = str(currenttime.hour) + str(currenttime.minute) + "-TWScan.txt" # gnenerate filename string
+		filename = str(currenttime.hour) + str(currenttime.minute) + "-TWScan.txt" # generate filename string
 		np.savetxt(filename, Y, delimiter=',') # save file 
 	
 	def startTScan(self):  # Connect to Start-button clicked() START the time domain scan
@@ -482,7 +482,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 gui window class.
 		try:
 			next(self._generator)  # Run the next iteration
 		except StopIteration:
-			self.stop()  # Iteration has finshed, kill the timer
+			self.stop()  # Iteration has finished, kill the timer
 if __name__ == "__main__": # open up the GUI windows (all standard pyqt commands)
 	app = QtGui.QApplication(sys.argv)
 	window = Main()
