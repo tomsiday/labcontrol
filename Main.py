@@ -329,7 +329,10 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 GUI window class.
 		
 		for a in range(0, len(y)): # loop over length of scan
 			
+			XYscanner.write(("1PA"+str(x[0]*1e-3) + "\r").encode()) # set x position back to start of scan
+			time.sleep(t_wait) # wait for stage to move
 			XYscanner.write(("2PA"+str(y[a]*1e-3) + "\r").encode()) # set y position
+			time.sleep(t_wait) # wait for stage to move
 
 			for b in range(0, len(x)): # loop over length of scan
 				
