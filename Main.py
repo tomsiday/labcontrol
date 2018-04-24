@@ -420,7 +420,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 GUI window class.
 		
 	def TimeScan(self): # loop for time scan
 		
-		# create aray of delay stage values
+		# create array of delay stage values
 		X = np.arange(float(delay_pos_init), float(delay_pos_init)-float(delay_length), -float(delay_step))
 		# initialise array of zeros for output data
 		Y = np.zeros(len(X))
