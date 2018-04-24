@@ -121,7 +121,7 @@ daq.sync()
 ########################################################################
 import serial # python library for serial connections
 # Initialise ESP301 serial connection
-XYscanner = serial.Serial('COM2', baudrate=921600, rtscts=True)
+XYscanner = serial.Serial('COM10', baudrate=921600, rtscts=True)
 
 # Flush and reset serial buffers (why not..)
 XYscanner.flush()
@@ -256,7 +256,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 GUI window class.
 		X, T, = np.mgrid[int(XT_pos_space_init):int(XT_pos_space_init)+int(XTLengthSpace):int(XTStepSpace), int(XT_pos_time_init):int(XT_pos_time_init)+int(XTLengthTime):int(XTStepTime)]
 		
 		# initialise an empty array where the measured values will be placed.
-		Z = np.zeros((len(t), len(xy)))
+		Z = np.zeros((len(xt), len(t)))
 		
 		ax = self.ui.XTPlot.figure.add_subplot(111) # create axis for color plot
 		
@@ -329,7 +329,10 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 GUI window class.
 		
 		for a in range(0, len(y)): # loop over length of scan
 			
+			XYscanner.write(("1PA"+str(x[0]*1e-3) + "\r").encode()) # set x position back to start of scan
+			time.sleep(t_wait) # wait for stage to move
 			XYscanner.write(("2PA"+str(y[a]*1e-3) + "\r").encode()) # set y position
+			time.sleep(t_wait) # wait for stage to move
 
 			for b in range(0, len(x)): # loop over length of scan
 				
