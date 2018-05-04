@@ -256,7 +256,7 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 GUI window class.
 		X, T, = np.mgrid[int(XT_pos_space_init):int(XT_pos_space_init)+int(XTLengthSpace):int(XTStepSpace), int(XT_pos_time_init):int(XT_pos_time_init)+int(XTLengthTime):int(XTStepTime)]
 		
 		# initialise an empty array where the measured values will be placed.
-		Z = np.zeros((len(xt), len(t)))
+		Z = np.zeros((len(xy), len(t)))
 		
 		ax = self.ui.XTPlot.figure.add_subplot(111) # create axis for color plot
 		
