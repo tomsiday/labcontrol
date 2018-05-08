@@ -1,9 +1,30 @@
-##########################################
-###### Lab Control software for 910 ######
-############### Tom Siday ################
-##########################################
+# -*- coding: utf-8 -*-
+"""Lab Control software for 910.
 
-#TODO pylint reports: "E:376, 0: invalid syntax (<string>, line 376) (syntax-error)"
+This software runs the delay line, and sample (x,y,z) coordinates and lock-in 
+to allow XY, XT, YT, TW scans.
+Disigned for experiments at the Fast Laser Research Laboratory in
+910 Roberts Building, UCL.
+
+Example:
+
+Run from the command line to be able to see the console information.
+
+        $ python Main.py
+
+Authors:
+    * Written by Tom Siday
+    * Minor coding modifications by Rodolfo I. Hermans
+    * Development ideas by Tom Siday, Lucy Hale and Rodolfo I. Hermans.
+
+TODO:
+    * pylint reports: "E:376, 0: invalid syntax (<string>, line 376) (syntax-error)"
+    * Add times in picoseconds (input and plot) 
+    * find an efficient way to do  plotting (it matters most for large arrays)
+    * Add the x and y values and experiment parameters in a separate file or header
+    * Add setting the dwell time for XY and XT scan
+
+"""
 
 # Imports
 ## standard library imports
@@ -114,9 +135,9 @@ time_constant = 0.3 # Lock-in time constant, t_c (seconds)
 osc_frequency = 32369.665 # frequency set for oscillator (if not using external reference)
 # Initial settings for THz time domain experiments.
 exp_setting = [['/%s/sigins/%d/ac'             % (device, in_channel), 1], # Set AC coupling (yes)
-				   ['/%s/sigins/%d/imp50'          % (device, in_channel), 0], # Use 10Mohm impedance
-				   ['/%s/sigins/%d/diff'           % (device, in_channel), 1], # Differential input
-				   ['/%s/sigins/%d/float'           % (device, in_channel), 0], # Float off
+                   ['/%s/sigins/%d/imp50'          % (device, in_channel), 0], # Use 10Mohm impedance
+                   ['/%s/sigins/%d/diff'           % (device, in_channel), 1], # Differential input
+                   ['/%s/sigins/%d/float'           % (device, in_channel), 0], # Float off
                    ['/%s/sigins/%d/range'          % (device, in_channel), 0.03], # Range setting
                    ['/%s/demods/%d/enable'         % (device, demod_index), 1], # Enable demod 0
                    ['/%s/demods/%d/rate'           % (device, demod_index), demod_rate], # Set data transfer rate to PC \(dont really know why this matters)
