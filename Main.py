@@ -3,6 +3,8 @@
 ############### Tom Siday ################
 ##########################################
 
+#TODO pylint reports: "E:376, 0: invalid syntax (<string>, line 376) (syntax-error)"
+
 # Imports
 ## standard library imports
 import numpy as np
@@ -372,10 +374,8 @@ class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 GUI window class.
 				
 				yield # has the stop button been pressed?
 			
-				
-			
 		print(Z # print the final dataset
-		currenttime = datetime.datetime.now() # get time for filename
+		currenttime = datetime.datetime.now() # get time for filename #TODO pylint reports: "E:376, 0: invalid syntax (<string>, line 376) (syntax-error)"
 		filename = str(currenttime.hour) + str(currenttime.minute) + "-XYScan.txt" # generate filename string
 		np.savetxt(filename, Z, delimiter=',')	# save data (no x,y)
 	
