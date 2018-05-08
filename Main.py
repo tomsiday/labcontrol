@@ -3,8 +3,31 @@
 ############### Tom Siday ################
 ##########################################
 
-# Import matplotlib for plotting
+# Imports
+## standard library imports
+import numpy as np
+import time
+import datetime
+import sys
+
+### Communication
+import visa # For GPIB communications for Klinger
+import serial
+
+### GUI
+from PyQt4 import QtCore, QtGui
+from Gui import Ui_MainWindow
+
+### Plotting
 import matplotlib
+import matplotlib.pyplot as plt
+
+## Third-party imports
+import zhinst.utils  # Zurich instruments MFLI
+
+##application-specific imports
+
+
 # Qt4Agg allows matplotlib to be used in a qt4 window.
 matplotlib.use('Qt4Agg')
 
@@ -43,7 +66,6 @@ XTLengthTime = 100 # scan length (time)
 ##################################################################
 ### Initialise the KLinGER MC4 motion controller (delay stage) ###
 ##################################################################
-import visa # For GPIB communications
 
 rm = visa.ResourceManager() # load up the pyvisa manager
 print(rm.list_resources()) #print the available devices KLINGER IS GPIB::8 (for now).
@@ -55,9 +77,6 @@ klinger.read_termination = '\r'
 ##############################################
 ### Initialise the Zurich instruments MFLI ###
 ##############################################
-import zhinst.utils # import the Zurich instruments python library
-import numpy as np # import numpy python library
-import time # for time.sleep
 
 device_id = 'dev3047' # Serial number of our MFLI
 
@@ -119,7 +138,7 @@ daq.sync()
 ########################################################################
 ### Initialise the ESP301 motion controller for aperture experiments ###
 ########################################################################
-import serial # python library for serial connections
+
 # Initialise ESP301 serial connection
 XYscanner = serial.Serial('COM10', baudrate=921600, rtscts=True)
 
@@ -152,12 +171,6 @@ print('Stage', XYscanner.read(XYscanner.in_waiting), 'Connected (AX3)')
 ################################################################################################
 ###### Gui display, callback functions (including run loops, e.g. the xy and time scans.) ######
 ################################################################################################
-
-import sys # python library of system specific parameters and functions
-from PyQt4 import QtCore, QtGui # import pyqt4, the GUI interface.
-from Gui import Ui_MainWindow # Gui is the python file containing this interface.
-import matplotlib.pyplot as plt # matplotlib pyplot for plotting in program.
-import datetime # gives us date and time (for saving files mainly)
 
 class Main(QtGui.QMainWindow,Ui_MainWindow): # PyQt4 GUI window class.
 	def __init__(self):
