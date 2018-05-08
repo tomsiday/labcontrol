@@ -163,7 +163,7 @@ daq.sync()
 ########################################################################
 
 # Initialise ESP301 serial connection
-XYscanner = serial.Serial('COM10', baudrate=921600, rtscts=True)
+XYscanner = serial.Serial('COM10', baudrate=921600, rtscts=True, timeout=1)
 
 # Flush and reset serial buffers (why not..)
 XYscanner.flush()
