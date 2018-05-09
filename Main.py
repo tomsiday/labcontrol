@@ -397,7 +397,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
         print(Z) # print the final dataset
         currenttime = datetime.datetime.now() # grab the time for the filename
         # generate the filename string
-        filename = ("%02d%02d-XYScan.txt" % (currenttime.hour, currenttime.minute))
+        filename = ("%02d%02d-XTScan.txt" % (currenttime.hour, currenttime.minute))
         np.savetxt(filename, Z, delimiter=',') # save the data (Z only for now)
         # TODO: add the x and y values, and experiment parameters in a separate file or header
 
@@ -448,7 +448,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
                 self.ui.XYPlot.flush_events()
                 yield # has the stop button been pressed?
         print(Z) # print the final dataset
-        # get time for filename
+        # gets current time for filename
         currenttime = datetime.datetime.now()
         # generate filename string
         filename = ("%02d%02d-XYScan.txt" % (currenttime.hour, currenttime.minute))
@@ -555,6 +555,25 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
         Y = np.zeros(len(X))
         ax = self.ui.TPlot.figure.add_subplot(211) # subplot for time domain scan
         ax2 = self.ui.TPlot.figure.add_subplot(212) # subplot for live Fourier transform
+        # get time for filename
+        starttime = datetime.datetime.now()
+        # generate filename string
+        metafilename = ("%02d%02d-TWScan-metadata.txt" % (starttime.hour, starttime.minute))
+        metafile = open(metafilename, 'w')
+        print("# Sample initial position", file=metafile)
+        print("#  X   : %f" % XYscanner.position(1), file=metafile)
+        print("#  Y   : %f" % XYscanner.position(2), file=metafile)
+        print("#  Z   : %f" % XYscanner.position(3), file=metafile)
+        print("# Delay line", file=metafile)
+        print("#  Initial value : %s" % delay_pos_init, file=metafile)
+        print("#  Scan length   : %s" % delay_length, file=metafile)
+        print("#  Step size     : %s" % delay_pos_init, file=metafile)
+        print("# Time", file=metafile)
+        print("#  Date       : %s" % datetime.date.today(), file=metafile)
+        print("#  Start time : %s" % starttime.strftime("%H:%M:%S"), file=metafile)
+        metafile.close()
+        datafile = open(datafilename, 'w')
+        datafilename = ("%02d%02d-TWScan.txt" % (currenttime.hour, currenttime.minute))
         for a in range(0, len(X)): # loop with length = number of points in scan
             # Send the position to the KLINGER.
             # it references the previously created array for position to send
@@ -569,6 +588,8 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
                 Y[a] = out['x']
             if self.ui.TLockinR.isChecked() is True:
                 Y[a] = out['r']
+            print("%e, %e" % (X[a], Y[a]), file=datafilename)
+            # Plotting
             ax.clear()  # clear plot (may add speed)
             ax.plot(X[0:a+1], Y[0:a+1]) # plot line plot
             ax.set_xlabel('Time') # draw axis labels
@@ -581,10 +602,10 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
             self.ui.TPlot.draw() # draw plots
             self.ui.TPlot.flush_events() # Flush the plot drawing, makes sure the plot updates.
             yield # check if stop button has been pressed.
-        currenttime = datetime.datetime.now() # get time for filename
-        # generate filename string
-        filename = ("%02d%02d-TWScan.txt" % (currenttime.hour, currenttime.minute))
-        np.savetxt(filename, Y, delimiter=',') # save file
+        datafilename.close()
+        metafile = open(metafilename, 'a')
+        print("#  Finish time: %s" % datetime.datetime.now().strftime("%H:%M:%S"), file=metafile)
+        metafile.close()
 
     def startTScan(self):
         """ Connect to Start-button clicked() START the time domain scan """
