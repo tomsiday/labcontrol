@@ -39,6 +39,7 @@ import serial
 
 ### Plotting
 import matplotlib
+matplotlib.use('Qt4Agg') # Qt4Agg allows matplotlib to be used in a qt4 window.
 import matplotlib.pyplot as plt
 
 ### GUI
@@ -51,9 +52,6 @@ import zhinst.utils  # Zurich instruments MFLI
 ##application-specific imports
 
 
-# Qt4Agg allows matplotlib to be used in a qt4 window.
-matplotlib.use('Qt4Agg')
-
 ###############################################################################
 # Newport ESP301 Motion controller
 class ESP301:
@@ -64,10 +62,10 @@ class ESP301:
         self.dev.flush()
         self.dev.reset_input_buffer()
         self.dev.reset_output_buffer()
-        print("Port     : %4s     Baud rate: %s" % (self.dev.port, self.dev.baudrate))
-        print("Byte size: %4s     Parity   : %s" % (self.dev.bytesize, self.dev.parity))
-        print("Stop bits: %4s     RTS/CTS  : %s\n" % (self.dev.stopbits, self.dev.rtscts))
-        print("Firmware : %s" % self.firmware())
+        print("║   Port     : %5s     Baud rate: %8s           ║" % (self.dev.port, self.dev.baudrate))
+        print("║   Byte size: %5s     Parity   : %8s           ║" % (self.dev.bytesize, self.dev.parity))
+        print("║   Stop bits: %5s     RTS/CTS  : %8s           ║" % (self.dev.stopbits, self.dev.rtscts))
+        print("║   Firmware : %10s                    ║" % self.firmware())
 
     def firmware(self):
         """gets firmware string"""
@@ -82,7 +80,7 @@ class ESP301:
     def errorcode(self):
         """ gets error code """
         self.dev.write(b"TE?\r")
-        return self.dev.readline(-1).decode('ascii').rstrip()
+        return int(self.dev.readline(-1).decode('ascii').rstrip())
 
     def stagemodel(self, axis):
         """ gets stage model for the given channel """
@@ -94,13 +92,13 @@ class ESP301:
            Arguments (channel int, position float, wait True/False) """
         if pos: # If position is given, then set position
 #            print("Moving ch%d to %f" % (axis, pos))
-#            self.dev.write(b"%dPA%f\r" % (axis, pos))
+            self.dev.write(b"%dPA%f\r" % (axis, pos))
             if wait: # Wait or not for the motion to stop
                 #Actual waiting is limited by serial timeout
 #                print("Waiting for ch%d to stop" % axis)
                 self.dev.write(b"%dWS\r" % axis)
         self.dev.write(b"%dTP\r" % axis)
-        return self.dev.readline(-1).decode('ascii').rstrip()
+        return float(self.dev.readline(-1).decode('ascii').rstrip())
 
     def velocity(self, axis, vel=None):
         """ gets/sets velocity
@@ -108,8 +106,10 @@ class ESP301:
         if vel: # If velocity is given, then set velocity
             self.dev.write(b"%dVA%f\r" % (axis, vel))
         self.dev.write(b"%dTV\r" % axis)
-        return self.dev.readline(-1).decode('ascii').rstrip()
+        return float(self.dev.readline(-1).decode('ascii').rstrip())
 
+print('╔══════════════════════════════════════════════════════╗')
+print('║ labcontrol                                  Lab 910  ║')
 ###############################################################################
 # Initial values
 #    Position values in microns
@@ -147,9 +147,11 @@ XTLengthTime = 100 # scan length (time)
 ##################################################################
 ### Initialise the KLinGER MC4 motion controller (delay stage) ###
 ##################################################################
+print('╟──────────────────────────────────────────────────────╢')
+print('║ MFLI API via GPIB                                    ║')
 
 rm = visa.ResourceManager() # load up the pyvisa manager
-print(rm.list_resources()) #print the available devices KLINGER IS GPIB::8
+# print(rm.list_resources()) #print the available devices KLINGER IS GPIB::8
 klinger = rm.open_resource('GPIB0::8::INSTR') # 'open' Klinger stage
 # Sets required EOL termination
 klinger.write_termination = '\r'
@@ -175,7 +177,8 @@ apilevel = 6
 # or PC library is updated above 17.06)
 # If this is False, both should be changed to the same version
 # preferably kept at 17.06 unless new features are required
-print('PC and MFLI API version align?:', zhinst.utils.api_server_version_check(daq))
+
+print('║   PC and MFLI API version align?: %6s             ║'% zhinst.utils.api_server_version_check(daq))
 
 # Base config for MFLI -- disable everything
 general_setting = [['/%s/demods/*/enable' % device, 0],
@@ -231,15 +234,16 @@ daq.sync()
 ########################################################################
 ### Initialise the ESP301 motion controller for aperture experiments ###
 ########################################################################
-
+print('╟──────────────────────────────────────────────────────╢')
+print('║ ESP301 via USB-RS232                                 ║')
 # Initialise ESP301 serial connection
 XYscanner = ESP301('COM10')
 
 # Ask the ESP301 to identify the stages on axis 1,2,3
-print('Stage %s Connected (AX1)' % XYscanner.stagemodel(1))
-print('Stage %s Connected (AX2)' % XYscanner.stagemodel(2))
-print('Stage %s Connected (AX3)' % XYscanner.stagemodel(3))
-
+print('║   Stage %18s Connected (AX1)           ║' % XYscanner.stagemodel(1))
+print('║   Stage %18s Connected (AX2)           ║' % XYscanner.stagemodel(2))
+print('║   Stage %18s Connected (AX3)           ║' % XYscanner.stagemodel(3))
+print('╚══════════════════════════════════════════════════════╝')
 ################################################################################################
 ###### Gui display, callback functions (including run loops, e.g. the xy and time scans.) ######
 ################################################################################################
@@ -557,24 +561,26 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
         ax2 = self.ui.TPlot.figure.add_subplot(212) # subplot for live Fourier transform
         # get time for filename
         starttime = datetime.datetime.now()
+        print("► TimeScan start : %s ◄               " % starttime.strftime("%H:%M:%S"), end='', flush=True)
         # generate filename string
         metafilename = ("%02d%02d-TWScan-metadata.txt" % (starttime.hour, starttime.minute))
+        datafilename = ("%02d%02d-TWScan.txt" % (starttime.hour, starttime.minute))
         metafile = open(metafilename, 'w')
-        print("# Sample initial position", file=metafile)
-        print("#  X   : %f" % XYscanner.position(1), file=metafile)
-        print("#  Y   : %f" % XYscanner.position(2), file=metafile)
-        print("#  Z   : %f" % XYscanner.position(3), file=metafile)
-        print("# Delay line", file=metafile)
-        print("#  Initial value : %s" % delay_pos_init, file=metafile)
-        print("#  Scan length   : %s" % delay_length, file=metafile)
-        print("#  Step size     : %s" % delay_pos_init, file=metafile)
-        print("# Time", file=metafile)
-        print("#  Date       : %s" % datetime.date.today(), file=metafile)
-        print("#  Start time : %s" % starttime.strftime("%H:%M:%S"), file=metafile)
+        metafile.write("# Sample initial position\n")
+        metafile.write("#  X   : %f\n" % XYscanner.position(1))
+        metafile.write("#  Y   : %f\n" % XYscanner.position(2))
+        metafile.write("#  Z   : %f\n" % XYscanner.position(3))
+        metafile.write("# Delay line\n")
+        metafile.write("#  Initial value : %s\n" % delay_pos_init)
+        metafile.write("#  Scan length   : %s\n" % delay_length)
+        metafile.write("#  Step size     : %s\n" % delay_step)
+        metafile.write("# Time\n")
+        metafile.write("#  Date       : %s\n" % datetime.date.today())
+        metafile.write("#  Start time : %s\n" % starttime.strftime("%H:%M:%S"))
         metafile.close()
         datafile = open(datafilename, 'w')
-        datafilename = ("%02d%02d-TWScan.txt" % (currenttime.hour, currenttime.minute))
         for a in range(0, len(X)): # loop with length = number of points in scan
+            print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b%04d of %04d ►" % (a + 1 ,len(X)), end='', flush=True)
             # Send the position to the KLINGER.
             # it references the previously created array for position to send
             klinger.write("PW" + str(X[a]))
@@ -588,7 +594,8 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
                 Y[a] = out['x']
             if self.ui.TLockinR.isChecked() is True:
                 Y[a] = out['r']
-            print("%e, %e" % (X[a], Y[a]), file=datafilename)
+            # write data into file
+            datafile.write("%d, %e\n" % (X[a], Y[a]))
             # Plotting
             ax.clear()  # clear plot (may add speed)
             ax.plot(X[0:a+1], Y[0:a+1]) # plot line plot
@@ -602,10 +609,11 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
             self.ui.TPlot.draw() # draw plots
             self.ui.TPlot.flush_events() # Flush the plot drawing, makes sure the plot updates.
             yield # check if stop button has been pressed.
-        datafilename.close()
+        datafile.close()
         metafile = open(metafilename, 'a')
-        print("#  Finish time: %s" % datetime.datetime.now().strftime("%H:%M:%S"), file=metafile)
+        metafile.write("#  Finish time: %s\n" % datetime.datetime.now().strftime("%H:%M:%S"))
         metafile.close()
+        print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b► Finished : %s ◄" % datetime.datetime.now().strftime("%H:%M:%S"))
 
     def startTScan(self):
         """ Connect to Start-button clicked() START the time domain scan """
