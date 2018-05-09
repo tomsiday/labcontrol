@@ -580,7 +580,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
         metafile.close()
         datafile = open(datafilename, 'w')
         for a in range(0, len(X)): # loop with length = number of points in scan
-            print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b%04d of %04d ►" % (a + 1 ,len(X)), end='', flush=True)
+            print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b%04d of %04d ►" % (a + 1, len(X)), end='', flush=True)
             # Send the position to the KLINGER.
             # it references the previously created array for position to send
             klinger.write("PW" + str(X[a]))
