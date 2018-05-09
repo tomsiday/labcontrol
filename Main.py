@@ -25,7 +25,7 @@ TODO:
     * Add setting the dwell time for XY and XT scan
 
 """
-
+###############################################################################
 # Imports
 ## standard library imports
 import sys
@@ -110,7 +110,8 @@ class ESP301:
         self.dev.write(b"%dTV\r" % axis)
         return self.dev.readline(-1).decode('ascii').rstrip()
 
-### Initial values ###
+###############################################################################
+# Initial values
 #    Position values in microns
 #    Time in units of delay stage position
 # TODO : add times in picoseconds (input and plot)
@@ -170,7 +171,8 @@ apilevel = 6
                                                        apilevel,
                                                        required_devtype='.*LI|.*IA|.*IS')
 
-# check out API versions align (in case the MFLI firmware, or PC library is updated above 17.06)
+# check out API versions align in case the MFLI firmware,
+# or PC library is updated above 17.06)
 # If this is False, both should be changed to the same version
 # preferably kept at 17.06 unless new features are required
 print('PC and MFLI API version align?:', zhinst.utils.api_server_version_check(daq))
