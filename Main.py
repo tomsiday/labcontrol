@@ -21,7 +21,6 @@ TODO:
     * Solve issues reported by 'pylint'
     * Add times in picoseconds (input and plot)
     * find an efficient way to do  plotting (it matters most for large arrays)
-    * Add the x and y values and experiment parameters in a separate file or header
     * Add setting the dwell time for XY and XT scan
 
 """
