@@ -87,14 +87,23 @@ class ESP301:
         return self.dev.readline(-1).decode('ascii').rstrip()
 
     def position(self, axis, pos=None, wait=False):
+    def position(self, axis, pos=None, wait=False, verbose=False):
         """gets/sets position
            Arguments (channel int, position float, wait True/False) """
         if pos: # If position is given, then set position
 #            print("Moving ch%d to %f" % (axis, pos))
+        self.verbose = verbose
+        if pos:  # If position is given, then set position
+            if self.verbose:
+                print("Moving ch%d to %f" % (axis, pos))
             self.dev.write(b"%dPA%f\r" % (axis, pos))
             if wait: # Wait or not for the motion to stop
                 #Actual waiting is limited by serial timeout
 #                print("Waiting for ch%d to stop" % axis)
+            if wait:  # Wait or not for the motion to stop
+                # Actual waiting is limited by serial timeout
+                if self.verbose:
+                    print("Waiting for ch%d to stop" % axis)
                 self.dev.write(b"%dWS\r" % axis)
         self.dev.write(b"%dTP\r" % axis)
         return float(self.dev.readline(-1).decode('ascii').rstrip())
