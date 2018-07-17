@@ -58,7 +58,7 @@ import zhinst.utils  # Zurich instruments MFLI
 # Newport ESP301 Motion controller
 class ESP301:
     """ Newport ESP301 Motion controller class """
-    def __init__(self, port="COM6", baudrate=921600):
+    def __init__(self, port="COM14", baudrate=921600):
         """ Initializes serial port, cleans buffers and prints port config """
         self.dev = serial.Serial(port, baudrate, rtscts=True, timeout=5)
         self.dev.flush()
@@ -149,8 +149,6 @@ XTLengthTime = 100 # scan length (time)
 ##################################################################
 ### Initialise the KLinGER MC4 motion controller (delay stage) ###
 ##################################################################
-print('╟──────────────────────────────────────────────────────╢')
-print('║ MFLI API via GPIB                                    ║')
 
 rm = visa.ResourceManager() # load up the pyvisa manager
 # print(rm.list_resources()) #print the available devices KLINGER IS GPIB::8
@@ -158,6 +156,14 @@ klinger = rm.open_resource('GPIB0::8::INSTR') # 'open' Klinger stage
 # Sets required EOL termination
 klinger.write_termination = '\r'
 klinger.read_termination = '\r'
+
+##################################################################
+### Initialise the SR830 lockin amplifiya###
+##################################################################
+print('╟──────────────────────────────────────────────────────╢')
+print('║ MFLI API via GPIB                                    ║')
+
+sr830 = rm.open_resource('GPIB0::6::INSTR') # 'open' the SR830 for communique
 
 ##############################################
 ### Initialise the Zurich instruments MFLI ###
@@ -239,7 +245,7 @@ daq.sync()
 print('╟──────────────────────────────────────────────────────╢')
 print('║ ESP301 via USB-RS232                                 ║')
 # Initialise ESP301 serial connection
-XYscanner = ESP301('COM10')
+XYscanner = ESP301('COM14')
 
 # Ask the ESP301 to identify the stages on axis 1,2,3
 print('║   Stage %18s Connected (AX1)           ║' % XYscanner.stagemodel(1))
@@ -380,16 +386,8 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
                     XYscanner.position(1, xy[b]*1e-3)
                 # wait for the selected dwell time to let lock-in demod settle
                 time.sleep(t_wait)
-                # grab a bunch of data from the MFLI
-                out = daq.getSample('/%s/demods/%d/sample' % (device, demod_index))
-                # Calculate the magnitude R from x and y (in MFLI dataset)
-                # and add it to the MFLI dataset
-                out['r'] = np.abs(out['x'] + 1j*out['y'])
-                # decide if we want magnitude or x shown on plot (and saved)
-                if self.ui.XTLockinX.isChecked() is True:
-                    Z[b, a] = out['x'] # put the lock-in value into the data array
-                if self.ui.XTLockinR.isChecked() is True:
-                    Z[b, a] = out['r'] # put the lock-in value into the data array
+                # grab then value on SR830 screen
+                Z[b, a] = sr830.query('OUTR ? 1')
                 ax.clear() # clear the axis (might help for speed)
                 ax.pcolor(X, T, Z) # colour plot
                 ax.set_xlabel('X (microns)') # draw axis labels
@@ -435,15 +433,8 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
             for b in range(0, len(x)): # loop over length of scan
                 XYscanner.position(1, x[b]*1e-3) # set x position
                 time.sleep(t_wait) # wait for lock-in filter to settle
-                # grab data from the MFLI
-                out = daq.getSample('/%s/demods/%d/sample' % (device, demod_index))
-                # Calculate the magnitude R from x and y and add to MFLI dataset
-                out['r'] = np.abs(out['x'] + 1j*out['y'])
-                # Select whether the plot is X or magnitude
-                if self.ui.XYLockinX.isChecked() is True:
-                    Z[b, a] = out['x']
-                if self.ui.XYLockinR.isChecked() is True:
-                    Z[b, a] = out['r']
+                # grab data from the SR830
+                Z[b, a] = sr830.query('OUTR ? 1')
                 ax.clear() # clear plot (may help with speed)
                 ax.pcolor(X, Y, Z) # color plot
                 ax.set_xlabel('x (microns)') # draw axis labels
@@ -587,16 +578,8 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
             # it references the previously created array for position to send
             klinger.write("PW" + str(X[a]))
             time.sleep(t_wait) # wait for lock-in filter to settle 'integration time'
-            # get data from MFLI
-            out = daq.getSample('/%s/demods/%d/sample' % (device, demod_index))
-            # Calculate the magnitude R from x and y
-            out['r'] = np.abs(out['x'] + 1j*out['y'])
-            # Select whether the plot is X or magnitude
-            if self.ui.TLockinX.isChecked() is True:
-                Y[a] = out['x']
-            if self.ui.TLockinR.isChecked() is True:
-                Y[a] = out['r']
-            # write data into file
+            # get data from SR830
+            Y[a] = sr830.query('OUTR ? 1')
             datafile.write("%d, %e\n" % (X[a], Y[a]))
             # Plotting
             ax.clear()  # clear plot (may add speed)

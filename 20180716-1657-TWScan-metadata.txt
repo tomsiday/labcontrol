@@ -1,0 +1,11 @@
+# Sample initial position
+#  X   : -20.000000
+#  Y   : 0.000000
+#  Z   : -1.000000
+# Delay line
+#  Initial value : 29750
+#  Scan length   : 2000
+#  Step size     : 5
+# Time
+#  Date       : 2018-07-16
+#  Start time : 16:57:34
