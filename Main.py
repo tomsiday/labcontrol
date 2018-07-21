@@ -48,17 +48,15 @@ import matplotlib.pyplot as plt
 from PyQt4 import QtCore, QtGui
 from Gui import Ui_MainWindow
 
-## Third-party imports
-import zhinst.utils  # Zurich instruments MFLI
-
-##application-specific imports
-
-
 ###############################################################################
 # Newport ESP301 Motion controller
+
+rm = visa.ResourceManager() # load up the pyvisa manager
+# print(rm.list_resources()) #print the available devices KLINGER IS GPIB::8
+
 class ESP301:
     """ Newport ESP301 Motion controller class """
-    def __init__(self, port="COM14", baudrate=921600):
+    def __init__(self, port="COM6", baudrate=921600):
         """ Initializes serial port, cleans buffers and prints port config """
         self.dev = serial.Serial(port, baudrate, rtscts=True, timeout=5)
         self.dev.flush()
@@ -110,6 +108,7 @@ class ESP301:
         self.dev.write(b"%dTV\r" % axis)
         return float(self.dev.readline(-1).decode('ascii').rstrip())
 
+
 print('╔══════════════════════════════════════════════════════╗')
 print('║ labcontrol                                  Lab 910  ║')
 ###############################################################################
@@ -135,7 +134,7 @@ XY_posX_init = 0 # Starting position (x-axis)
 XY_posY_init = 0 # Starting position (y-axis)
 XYStepX = 10 # position step (x-axis)
 XYStepY = 10 # position step (y-axis)
-XYLengthX = 100 # Scan length (x-axis)
+XYLengthX = 100 # Scan length (x-axis)111
 XYLengthY = 100 # scan length (y-axis)
 
 ## Initial XT scan parameters
@@ -150,8 +149,7 @@ XTLengthTime = 100 # scan length (time)
 ### Initialise the KLinGER MC4 motion controller (delay stage) ###
 ##################################################################
 
-rm = visa.ResourceManager() # load up the pyvisa manager
-# print(rm.list_resources()) #print the available devices KLINGER IS GPIB::8
+
 klinger = rm.open_resource('GPIB0::8::INSTR') # 'open' Klinger stage
 # Sets required EOL termination
 klinger.write_termination = '\r'
@@ -165,87 +163,13 @@ print('║ MFLI API via GPIB                                    ║')
 
 sr830 = rm.open_resource('GPIB0::6::INSTR') # 'open' the SR830 for communique
 
-##############################################
-### Initialise the Zurich instruments MFLI ###
-##############################################
-
-device_id = 'dev3047' # Serial number of our MFLI
-# API level in the 17,06 release from ZI.
-# probably not a good idea to change this.
-apilevel = 6
-
-# Create a session (daq) for communication with the MFLI.
-# Device is the serial number, and props is a load of useful info
-# about the session
-(daq, device, props) = zhinst.utils.create_api_session(device_id,
-                                                       apilevel,
-                                                       required_devtype='.*LI|.*IA|.*IS')
-
-# check out API versions align in case the MFLI firmware,
-# or PC library is updated above 17.06)
-# If this is False, both should be changed to the same version
-# preferably kept at 17.06 unless new features are required
-
-print('║   PC and MFLI API version align?: %6s             ║'% zhinst.utils.api_server_version_check(daq))
-
-# Base config for MFLI -- disable everything
-general_setting = [['/%s/demods/*/enable' % device, 0],
-                   ['/%s/demods/*/trigger' % device, 0],
-                   ['/%s/sigouts/*/enables/*' % device, 0],
-                   ['/%s/scopes/*/enable' % device, 0]]
-
-# Set this base config on the MFLI
-daq.set(general_setting)
-
-# SYNC (make sure PC and MFLI have communicated settings, etc...)
-daq.sync()
-
-## Configure the MFLI for streaming data
-# these are all standard settings, available in the MFLI manual
-# and in exp_setting below
-
-out_channel = 0
-out_mixer_channel = zhinst.utils.default_output_mixer_channel(props)
-in_channel = 0 # Signal in from preamp (+V)
-demod_index = 0 # which demodulator to use
-osc_index = 0 # which oscillator to use
-demod_rate = 1e3 # data transfer rate for the selected demodulator
-time_constant = 0.3 # Lock-in time constant, t_c (seconds)
-osc_frequency = 32369.665 # frequency set for oscillator (if not using external reference)
-# Initial settings for THz time domain experiments.
-exp_setting = [
-    ['/%s/sigins/%d/ac'           % (device, in_channel), 1], # AC coupling (yes)
-    ['/%s/sigins/%d/imp50'        % (device, in_channel), 0], # Use 10Mohm impedance
-    ['/%s/sigins/%d/diff'         % (device, in_channel), 0], # Differential input
-    ['/%s/sigins/%d/float'        % (device, in_channel), 0], # Float off
-    ['/%s/sigins/%d/range'        % (device, in_channel), 0.03], # Range setting
-    ['/%s/demods/%d/enable'       % (device, demod_index), 1], # Enable demod 0
-    ['/%s/demods/%d/rate'         % (device, demod_index), demod_rate], # data transfer rate to PC
-    ['/%s/demods/%d/adcselect'    % (device, demod_index), in_channel], # input channel for demod 0
-    ['/%s/demods/%d/order'        % (device, demod_index), 4], # filter order for demod 0
-    ['/%s/demods/%d/timeconstant' % (device, demod_index), time_constant], # filter time constant
-    ['/%s/demods/%d/oscselect'    % (device, demod_index), osc_index], # oscillator for demod 0
-    ['/%s/demods/%d/harmonic'     % (device, demod_index), 1], # harmonic for measurement
-    ['/%s/extrefs/0/enable'       % (device), 1], # external reference on/off (optical chopper)
-    ['/%s/demods/1/adcselect'     % (device), 8] # Select the input for the external reference
-    ]
-# set the above settings on the MFLI
-daq.set(exp_setting)
-# Stop from any data streaming/being collected (needs to be done as prep for measurements)
-daq.unsubscribe('*')
-# Wait for demod filter to settle (10 * filter time constant)
-time.sleep(10*time_constant)
-# SYNC (make sure PC and MFLI agree with settings, etc...)
-# must be done after waiting for the demod filter to settle
-daq.sync()
-
 ########################################################################
 ### Initialise the ESP301 motion controller for aperture experiments ###
 ########################################################################
 print('╟──────────────────────────────────────────────────────╢')
 print('║ ESP301 via USB-RS232                                 ║')
 # Initialise ESP301 serial connection
-XYscanner = ESP301('COM14')
+XYscanner = ESP301('COM10')
 
 # Ask the ESP301 to identify the stages on axis 1,2,3
 print('║   Stage %18s Connected (AX1)           ║' % XYscanner.stagemodel(1))
