@@ -1,98 +1,97 @@
 ### Pyqt Graph plotting
 
-from pyqtgraph.Qt import QtGui, QtCore
-import numpy as np
+from pyqtgraph.Qt import QtGui, QtCore # import Qt libaries
+import numpy as np 
 import pyqtgraph as pg
 from pyqtgraph.Point import Point # import a pointer mouse thing
 import math
+
 app = QtGui.QApplication([])
 
 
 win = pg.GraphicsWindow(title="Time domain scan") # Open a graphics window for pyqtgraph
 #win.showMaximized() # Open Window maximised
 
-label = pg.LabelItem(justify='right') # create 'text box'
-win.addItem(label) # add the 'text box' to the window
+TDCursorPos = pg.LabelItem(justify='right') # create 'text box'
+win.addItem(TDCursorPos) # add the 'text box' to the window
 
 win.nextRow() # add a new row for plots 
-
 
 pg.setConfigOptions(antialias=True) # Enable antialiasing for prettier plots
 
-p1 = win.addPlot() # add a plot with title
-p1.setAutoVisible(y=True) # set auto range with only visible data
-p1.setDownsampling(mode='peak') # downsampling reduces draw load
+TD = win.addPlot() # add a plot with title
+TD.setAutoVisible(y=True) # set auto range with only visible data
+TD.setDownsampling(mode='peak') # downsampling reduces draw load
 
-curve1 = p1.plot(pen='r') 
+TDCurve = TD.plot(pen='r') # create a curve in the plot 
 
 win.nextRow() # add a new row for plots 
 
-label2 = pg.LabelItem(justify='right') # create 'text box'
-win.addItem(label2) # add the 'text box' to the window
+FFTCursorPos = pg.LabelItem(justify='right') # create 'text box'
+win.addItem(FFTCursorPos) # add the 'text box' to the window
 
-win.nextRow()
+win.nextRow() # add new plot row
 
-p2 = win.addPlot() # add a plot with title
-p2.setAutoVisible(y=True) # set auto range with only visible data
-p2.setDownsampling(mode='peak') # downsampling reduces draw load
+FFT = win.addPlot() # add a plot with title
+FFT.setAutoVisible(y=True) # set auto range with only visible data
+FFT.setDownsampling(mode='peak') # downsampling reduces draw load
 
-curve2 = p2.plot(pen='g') 
+FFTCurve = FFT.plot(pen='g') # add curve in plot
 
 def generateLines():
-    global vLine, hLine, vLine2, hLine2
-    vLine = pg.InfiniteLine(angle=90, movable=False, pen = 'w') # create infinite vertical line
-    hLine = pg.InfiniteLine(angle=0, movable=False, pen = 'w') #  create infinite horizontal line
-    p1.addItem(vLine, ignoreBounds=True) # add the vertical line
-    p1.addItem(hLine, ignoreBounds=True) # add the horizontal line
+    global vLineTD, hLineTD, vLineFFT, hLineFFT
+    vLineTD = pg.InfiniteLine(angle=90, movable=False, pen = 'w') # create infinite vertical line
+    hLineTD = pg.InfiniteLine(angle=0, movable=False, pen = 'w') #  create infinite horizontal line
+    TD.addItem(vLineTD, ignoreBounds=True) # add the vertical line
+    TD.addItem(hLineTD, ignoreBounds=True) # add the horizontal line
 
 
-    vLine2 = pg.InfiniteLine(angle=90, movable=False, pen='g') # create infinite vertical line
-    hLine2 = pg.InfiniteLine(angle=0, movable=False, pen='g') #  create infinite horizontal line
-    p2.addItem(vLine2, ignoreBounds=True) # add the vertical line
-    p2.addItem(hLine2, ignoreBounds=True) # add the horizontal line
+    vLineFFT = pg.InfiniteLine(angle=90, movable=False, pen='g') # create infinite vertical line
+    hLineFFT = pg.InfiniteLine(angle=0, movable=False, pen='g') #  create infinite horizontal line
+    FFT.addItem(vLineFFT, ignoreBounds=True) # add the vertical line
+    FFT.addItem(hLineFFT, ignoreBounds=True) # add the horizontal line
 
-def mouseMovedTime(evt):
+def mouseMovedTD(evt):
     if timer.isActive() is False: # do if scan is not running
-        mousePoint = p1.vb.mapSceneToView(evt[0])
-        label.setText("<span style='font-size: 12pt'>Cursor at: x=%0.3f,   <span style='color: red'>y1=%0.3f</span>" % (mousePoint.x(), mousePoint.y()))
-        vLine.setPos(mousePoint.x())
-        hLine.setPos(mousePoint.y())
+        mousePoint = TD.vb.mapSceneToView(evt[0]) # get the mouse position
+        TDCursorPos.setText("<span style='font-size: 12pt'>Cursor at: x=%0.3f,   <span style='color: red'>y1=%0.3f</span>" % (mousePoint.x(), mousePoint.y())) # set the numerical display
+        vLineTD.setPos(mousePoint.x()) # move the vertical line
+        hLineTD.setPos(mousePoint.y()) # move the horisontal line
 
-proxy = pg.SignalProxy(p1.scene().sigMouseMoved, rateLimit=60, slot=mouseMovedTime)
+proxy = pg.SignalProxy(TD.scene().sigMouseMoved, rateLimit=60, slot=mouseMovedTD)
 
 def mouseMovedFFT(evt):
     if timer.isActive() is False: # do if scan is not running
-        mousePoint = p2.vb.mapSceneToView(evt[0])
-        label2.setText("<span style='font-size: 12pt'>Cursor at: x=%0.3f,   <span style='color: red'>y1=%0.3f</span>" % (mousePoint.x(), mousePoint.y()))
-        vLine2.setPos(mousePoint.x())
-        hLine2.setPos(mousePoint.y())
+        mousePoint = FFT.vb.mapSceneToView(evt[0])
+        FFTCursorPos.setText("<span style='font-size: 12pt'>Cursor at: x=%0.3f,   <span style='color: red'>y1=%0.3f</span>" % (mousePoint.x(), mousePoint.y()))
+        vLineFFT.setPos(mousePoint.x())
+        hLineFFT.setPos(mousePoint.y())
 
-proxy2 = pg.SignalProxy(p2.scene().sigMouseMoved, rateLimit=60, slot=mouseMovedFFT)
+proxy2 = pg.SignalProxy(FFT.scene().sigMouseMoved, rateLimit=60, slot=mouseMovedFFT)
 
-
-data1 = np.empty(1000) # create empty numpy array to be filled 
-ptr1 = 0 # points to position on array
+dataTD = np.empty(500) # create empty numpy array to be filled 
+ptr = 0 # points to position on array
 
 def update():
-    global data1, ptr1
-    if ptr1 < len(data1):
-        data1[ptr1] = np.sin(np.radians(ptr1*10)) # generate a random number
+    global dataTD, ptr
+    if ptr < len(dataTD):
+        dataTD[ptr] = np.sin(np.radians(ptr*10)) # generate a random number
 
-        label.setText("<span style='font-size: 12pt'>Current sample: x=%0.3f,   <span style='color: red'>y=%0.3f</span>" % (ptr1, data1[ptr1]))
-        label2.setText("<span style='font-size: 12pt'>Number of FFT points: %0.3f" % (ptr1))
+        TDCursorPos.setText("<span style='font-size: 12pt'>Current sample: x=%0.3f,   <span style='color: red'>y=%0.3f</span>" % (ptr, dataTD[ptr]))
+        FFTCursorPos.setText("<span style='font-size: 12pt'>Number of FFT points: %0.3f" % (ptr))
 
-        ptr1 += 1 # increase pointer
+        ptr += 1 # increase pointer
 
-        curve1.setData(data1[:ptr1], pen = "r", clear = True) # update the plot (only new data)
-        fft = np.abs(np.fft.fft(data1[:ptr1]))
-        curve2.setData(fft, pen = "r", clear = True) # update the plot (only new data)
+        TDCurve.setData(dataTD[:ptr], pen = "r", clear = True) # update the plot (only new data)
+        dataFFT = np.abs(np.fft.fft(dataTD[:ptr])) # do an FFT of the data measured up till now
+        FFTCurve.setData(dataFFT, pen = "r", clear = True) # update the plot (only new data)
 
-        p1.setRange(xRange=[0, ptr1+5]) # set the scale 
-        p2.setRange(xRange=[0, ptr1+5]) # set the scale 
+        TD.setRange(xRange=[0, ptr+5]) # set the scale 
+        FFT.setRange(xRange=[0, ptr+5]) # set the scale 
 
     else:
-        timer.stop()
-        generateLines()
+        timer.stop() # stop the timer
+        generateLines() # run the crosshair generate function
 
 timer = pg.QtCore.QTimer() # generate a timer object
 timer.timeout.connect(update) # run 'update' everytime the timer ticks
