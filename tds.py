@@ -19,6 +19,7 @@ import pyqtgraph.console
 from esp301 import *
 
 def tgo(tPosition):
+    klinger.write("PW" + str(tPosition))
     print("Moving delay stage to " + str(tPosition))
 
 def xgo(xPosition):
@@ -34,6 +35,8 @@ def stop():
     timer.stop() # stop the timer
 
 def quit():
+    klinger.close()
+    sr830.close()
     app.closeAllWindows()
 
 def generateLines(): 
@@ -129,9 +132,8 @@ def update():
     global dataTD, ptr, datafile
     
     if ptr < len(dataTD):
-        
-        #time.sleep(Tdwell)
-        dataTD[ptr] = np.sin(np.radians(ptr*10)) # generate a random number
+         
+        dataTD[ptr] = sr830.query('OUTR ? 1') # generate a random number
         TDCursorPos.setText("<span style='font-size: 12pt'>Current sample: x=%0.3f,   <span style='color: red'>y=%0.3f</span>" % (ptr, dataTD[ptr]))
         FFTCursorPos.setText("<span style='font-size: 12pt'>Number of FFT points: %0.3f" % (ptr))
 
@@ -140,13 +142,11 @@ def update():
         datafile.flush()
         ptr += 1 # increase pointer
 
-        TDCurve.setData(dataTD[:ptr], pen = "r", clear = True) # update the plot (only new data)
+        TDCurve.setData(stage[:ptr], dataTD[:ptr], pen = "r", clear = True) # update the plot (only new data)
         dataFFT = np.abs(np.fft.fft(dataTD[:ptr])) # do an FFT of the data measured up till now
         FFTCurve.setData(dataFFT, pen = "r", clear = True) # update the plot (only new data)
-
-        TD.setRange(xRange=[0, ptr+5]) # set the scale 
-        FFT.setRange(xRange=[0, ptr+5]) # set the scale 
-        
+ 
+        klinger.write("PW" + str(stage[ptr]))
     
     else: # What to do then the scan finishes 
         
@@ -168,6 +168,22 @@ def update():
 
         if CloseOnFinish == True:
             app.closeAllWindows()
+
+##################################################################
+#  Initialise the KLinGER MC4 motion controller (delay stage)    #
+##################################################################
+rm = visa.ResourceManager()  # load up the pyvisa manager
+# print(rm.list_resources()) #print the available devices KLINGER IS GPIB::8
+klinger = rm.open_resource('GPIB0::8::INSTR')  # 'open' Klinger stage
+# Sets required EOL termination
+klinger.write_termination = '\r'
+klinger.read_termination = '\r'
+
+########################################################
+#  Initialise the Stanford instrumetnts SR830 (Lockin) #
+########################################################
+sr830 = rm.open_resource('GPIB0::6::INSTR')  # 'open' sr830
+
 # parser for config file (scan parameters)
 config = configparser.ConfigParser()
 config.read('scan.conf')
