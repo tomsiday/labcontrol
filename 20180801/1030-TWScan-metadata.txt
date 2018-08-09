@@ -1,8 +1,0 @@
-# Delay line
-#  Initial value : 500
-#  Scan length   : 1000
-#  Step size     : 10
-# Time
-#  Date       : 2018-08-01
-#  Start time : 10:30:50
-#  Finish time: 10:30:53
