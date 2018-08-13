@@ -10,14 +10,13 @@ Measuring the scattering of indium tip, multiple harmonics
 import sys, datetime, time, math, argparse, configparser, os, numpy as np
 ### Communication
 import visa, serial
+## Ni DAQ
+import nidaqmx
 ### Plotting
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 from pyqtgraph.Point import Point
 import pyqtgraph.console
-
-## Import ESP 301 functions
-from esp301 import *
 
 # Third party imports
 import zhinst.utils
@@ -37,41 +36,36 @@ def zgo(zPosition):
 
 def stop():
     
+    global demod1Line
     timer.stop() # stop the timer
     klinger.clear() ## needed otherwse the klinger complains (TODO: work out why)  
 
+    demod1Line = genLines(demod1) # run the crosshair generate function
 def quit():
     
     klinger.clear() ## needed otherwse the klinger complains (TODO: work out why)  
     klinger.close()
     app.closeAllWindows()
 
-def generateLines(): 
-    global vLineTD, hLineTD, vLineFFT, hLineFFT
-    vLineTD = pg.InfiniteLine(angle=90, movable=False, pen = 'w') # create infinite vertical line
-    hLineTD = pg.InfiniteLine(angle=0, movable=False, pen = 'w') #  create infinite horizontal line
-    TD.addItem(hLineTD, ignoreBounds=True) # add the horizontal line
-    TD.addItem(vLineTD, ignoreBounds=True) # add vertical line
+class genLines:
 
-    vLineFFT = pg.InfiniteLine(angle=90, movable=False, pen='g') # create infinite vertical line
-    hLineFFT = pg.InfiniteLine(angle=0, movable=False, pen='g') #  create infinite horizontal line
-    FFT.addItem(vLineFFT, ignoreBounds=True) # add the vertical line
-    FFT.addItem(hLineFFT, ignoreBounds=True) # add the horizontal line
+    def __init__(self, plot):
+        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen = 'w') # create infinite vertical line
+        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen = 'w') #  create infinite horizontal line
+        plot.addItem(self.hLine, ignoreBounds=True) # add the horizontal line
+        plot.addItem(self.vLine, ignoreBounds=True) # add vertical line
 
 # callback for when the mouse is moved after the scan is complete (move cursor and set the text)
-def mouseMovedTD(evt):
-    if timer.isActive() is False: # do if scan is not running
-        mousePoint = TD.vb.mapSceneToView(evt[0]) # get the mouse position
-        TDCursorPos.setText("<span style='font-size: 12pt'>Cursor at: x=%0.3f,   <span style='color: red'>y1=%0.3f</span>" % (mousePoint.x(), mousePoint.y())) # set the numerical display
-        vLineTD.setPos(mousePoint.x()) # move the vertical line
-        hLineTD.setPos(mousePoint.y()) # move the horisontal line
+class mouseMoved:
+   
+    def __init__(self, evt):
 
-def mouseMovedFFT(evt):
-    if timer.isActive() is False: # do if scan is not running
-        mousePoint = FFT.vb.mapSceneToView(evt[0])
-        FFTCursorPos.setText("<span style='font-size: 12pt'>Cursor at: x=%0.3f,   <span style='color: red'>y1=%0.3f</span>" % (mousePoint.x(), mousePoint.y()))
-        vLineFFT.setPos(mousePoint.x())
-        hLineFFT.setPos(mousePoint.y())
+        if timer.isActive() is False: # do if scan is not running
+            mousePoint = demod1.vb.mapSceneToView(evt[0]) # get the mouse position
+            demod1CursorPos.setText("<span style='font-size: 12pt'>Cursor at: x=%0.3f,   <span style='color: red'>y1=%0.3f</span>" % (mousePoint.x(), mousePoint.y())) # set the numerical display
+            demod1Line.vLine.setPos(mousePoint.x()) # move the vertical line
+            demod1Line.hLine.setPos(mousePoint.y()) # move the horisontal line
+
 def fileSetup():
 
     global metafile, datafile, metafilename
@@ -111,14 +105,14 @@ def fileSetup():
 
 def start(): 
     
-    global dataTD, dataFFT, ptr, TDCurve, FFTCurve, timer
+    global datademod1, dataFFT, ptr, demod1Curve, FFTCurve, timer
     
-    dataTD = np.zeros(len(stage)) # create empty numpy array to be filled 
+    datademod1 = np.zeros(len(stage)) # create empty numpy array to be filled 
     dataFFT = np.zeros(len(stage)) 
 
     ptr = 0 # points to position on array
 
-    TDCurve = TD.plot(dataTD)
+    demod1Curve = demod1.plot(datademod1)
     FFTCurve = FFT.plot(dataFFT)
      
     update()
@@ -128,20 +122,20 @@ def start():
     timer.start(CP.Tdwell*1e3) # timer ticks every X ms (50)
 
 def restart():
-    global dataTD, dataFFT, ptr, TDCurve, FFTCurve, timer
+    global datademod1, dataFFT, ptr, demod1Curve, FFTCurve, timer
     
-    TD.clear()
+    demod1.clear()
     FFT.clear()
     fileSetup()
     start()
 
 def update():
-    global dataTD, ptr, datafile
+    global datademod1, ptr, datafile, demod1Line
     
-    if ptr < len(dataTD):
+    if ptr < len(datademod1):
          
         
-        TDCursorPos.setText("<span style='font-size: 12pt'>Current sample: x=%0.3f,   <span style='color: red'>y=%0.3f</span>" % (ptr, dataTD[ptr]))
+        demod1CursorPos.setText("<span style='font-size: 12pt'>Current sample: x=%0.3f,   <span style='color: red'>y=%0.3f</span>" % (ptr, datademod1[ptr]))
         FFTCursorPos.setText("<span style='font-size: 12pt'>Number of FFT points: %0.3f" % (ptr))
         
         out = MFLI.daq.getSample('/%s/demods/%d/sample' % (MFLI.device, MFLI.demod_0)) # Grab a sample from the MFLI
@@ -149,17 +143,17 @@ def update():
         out['r'] = np.abs(out['x'] + 1j*out['y']) # calculate magnitude from 
             
         if CP.RX == 'X' or 'x':
-            dataTD[ptr] = out['x']
+            datademod1[ptr] = out['x']
         if CP.RX == 'R' or 'r':
-            dataTD[ptr] = out['r']
+            datademod1[ptr] = out['r']
        
        # write data into file
-        datafile.write("%d, %e\n" % (stage[ptr], dataTD[ptr]))
+        datafile.write("%d, %e\n" % (stage[ptr], datademod1[ptr]))
         datafile.flush()
         ptr += 1 # increase pointer
 
-        TDCurve.setData(stage[:ptr], dataTD[:ptr], pen = "r", clear = True) # update the plot (only new data)
-        dataFFT = np.abs(np.fft.fft(dataTD[:ptr])) # do an FFT of the data measured up till now
+        demod1Curve.setData(stage[:ptr], datademod1[:ptr], pen = "r", clear = True) # update the plot (only new data)
+        dataFFT = np.abs(np.fft.fft(datademod1[:ptr])) # do an FFT of the data measured up till now
         FFTCurve.setData(dataFFT, pen = "r", clear = True) # update the plot (only new data)
         
         klinger.write("PW" + str(stage[ptr]))
@@ -187,7 +181,7 @@ def update():
         
         timer.stop() # stop the timer
         
-        generateLines() # run the crosshair generate function
+        demod1Line = genLines(demod1) # run the crosshair generate function
 
         if CloseOnFinish == True:
             app.closeAllWindows()
@@ -320,15 +314,23 @@ if args.z is not None:
 StagePositionText = pg.LabelItem(justify = 'left')
 StagePositionText.setText("<span style='font-size: 12pt'><span style='color: green'>x: " + str(args.x) + " y: " + str(args.y) + " z: " + str(args.z))
 
-TDCursorPos = pg.LabelItem() # create 'text box' to show the position of the cursor/current TD sample 
+demod1CursorPos = pg.LabelItem() # create 'text box' to show the position of the cursor/current TD sample 
 FFTCursorPos = pg.LabelItem() # create 'text box' to show the position of the cursor/number of FFT points
 
-win.addItem(TDCursorPos) 
+win.addItem(demod1CursorPos) 
 win.nextRow() # add new plot row
 
-TD = win.addPlot() # add a plot with title
-TD.setAutoVisible(y=True) # set auto range with only visible data
-TD.setDownsampling(mode='peak') # downsampling reduces draw load
+demod1 = win.addPlot() # add a plot with title
+demod1.setAutoVisible(y=True) # set auto range with only visible data
+demod1.setDownsampling(mode='peak') # downsampling reduces draw load
+
+demod2 = win.addPlot() # add a plot with title
+demod2.setAutoVisible(y=True) # set auto range with only visible data
+demod2.setDownsampling(mode='peak') # downsampling reduces draw load
+
+demod3 = win.addPlot() # add a plot with title
+demod3.setAutoVisible(y=True) # set auto range with only visible data
+demod3.setDownsampling(mode='peak') # downsampling reduces draw load
 
 win.nextRow()
 win.addItem(FFTCursorPos)
@@ -347,8 +349,9 @@ console.setWindowTitle('Console')
 console.setGeometry(screen.width()-ConsoleWidth, TitleBar, ConsoleWidth, screen.height()-TitleBar)
 console.show()
 
-proxy = pg.SignalProxy(TD.scene().sigMouseMoved, rateLimit=60, slot=mouseMovedTD)
-proxy2 = pg.SignalProxy(FFT.scene().sigMouseMoved, rateLimit=60, slot=mouseMovedFFT)
+
+proxy = pg.SignalProxy(demod1.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
+proxy2 = pg.SignalProxy(FFT.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
 
 # array with positions of time delay stage
 
