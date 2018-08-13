@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
-"""Lab Control software for 910.
+"""
+Lab Control software for 910.
 
-TIME DOMAIN SCAN
+Measuring the scattering of indium tip, multiple harmonics
+
 """
 ###############################################################################
 # Imports
@@ -18,6 +19,9 @@ import pyqtgraph.console
 ## Import ESP 301 functions
 from esp301 import *
 
+# Third party imports
+import zhinst.utils
+
 def tgo(tPosition):
     klinger.write("PW" + str(tPosition))
     print("Moving delay stage to " + str(tPosition))
@@ -32,11 +36,14 @@ def zgo(zPosition):
     print("Moving sample to z = " + str(zPosition))
 
 def stop():
+    
     timer.stop() # stop the timer
+    klinger.clear() ## needed otherwse the klinger complains (TODO: work out why)  
 
 def quit():
+    
+    klinger.clear() ## needed otherwse the klinger complains (TODO: work out why)  
     klinger.close()
-    sr830.close()
     app.closeAllWindows()
 
 def generateLines(): 
@@ -93,9 +100,9 @@ def fileSetup():
     #metafile.write("#  Y   : %f\n" % XYscanner.position(2))
     #metafile.write("#  Z   : %f\n" % XYscanner.position(3))
     metafile.write("# Delay line\n")
-    metafile.write("#  Initial value : %s\n" % Tstart)
-    metafile.write("#  Scan length   : %s\n" % Tlength)
-    metafile.write("#  Step size     : %s\n" % Tstep)
+    metafile.write("#  Initial value : %s\n" % CP.Tstart)
+    metafile.write("#  Scan length   : %s\n" % CP.Tlength)
+    metafile.write("#  Step size     : %s\n" % CP.Tstep)
     metafile.write("# Time\n")
     metafile.write("#  Date       : %s\n" % datetime.date.today())
     metafile.write("#  Start time : %s\n" % starttime.strftime("%H:%M:%S"))
@@ -113,12 +120,12 @@ def start():
 
     TDCurve = TD.plot(dataTD)
     FFTCurve = FFT.plot(dataFFT)
-    
+     
     update()
 
     timer = pg.QtCore.QTimer() # generate a timer object
     timer.timeout.connect(update) # run 'update' everytime the timer ticks
-    timer.start(Tdwell*1e3) # timer ticks every X ms (50)
+    timer.start(CP.Tdwell*1e3) # timer ticks every X ms (50)
 
 def restart():
     global dataTD, dataFFT, ptr, TDCurve, FFTCurve, timer
@@ -133,11 +140,20 @@ def update():
     
     if ptr < len(dataTD):
          
-        dataTD[ptr] = sr830.query('OUTR ? 1') # generate a random number
+        
         TDCursorPos.setText("<span style='font-size: 12pt'>Current sample: x=%0.3f,   <span style='color: red'>y=%0.3f</span>" % (ptr, dataTD[ptr]))
         FFTCursorPos.setText("<span style='font-size: 12pt'>Number of FFT points: %0.3f" % (ptr))
-
-        # write data into file
+        
+        out = MFLI.daq.getSample('/%s/demods/%d/sample' % (MFLI.device, MFLI.demod_0)) # Grab a sample from the MFLI
+            
+        out['r'] = np.abs(out['x'] + 1j*out['y']) # calculate magnitude from 
+            
+        if CP.RX == 'X' or 'x':
+            dataTD[ptr] = out['x']
+        if CP.RX == 'R' or 'r':
+            dataTD[ptr] = out['r']
+       
+       # write data into file
         datafile.write("%d, %e\n" % (stage[ptr], dataTD[ptr]))
         datafile.flush()
         ptr += 1 # increase pointer
@@ -145,11 +161,18 @@ def update():
         TDCurve.setData(stage[:ptr], dataTD[:ptr], pen = "r", clear = True) # update the plot (only new data)
         dataFFT = np.abs(np.fft.fft(dataTD[:ptr])) # do an FFT of the data measured up till now
         FFTCurve.setData(dataFFT, pen = "r", clear = True) # update the plot (only new data)
- 
-        klinger.write("PW" + str(stage[ptr]))
-    
-    else: # What to do then the scan finishes 
         
+        klinger.write("PW" + str(stage[ptr]))
+
+        klingerPos = float(klinger.query('DW').strip("W=+")) # request position (will only be provided when movement is complete) Strip formatting and generate position as float
+        
+        if int(klingerPos) != stage[ptr]:
+            print("Position error") 
+
+    else: # What to do then the scan finishes 
+       
+
+        klinger.clear() ## needed otherwse the klinger complains (TODO: work out why)  
         datafile.close()
         metafile = open(metafilename, 'a')
         metafile.write(
@@ -169,6 +192,42 @@ def update():
         if CloseOnFinish == True:
             app.closeAllWindows()
 
+# parser for config file (scan parameters)
+class ConfigParser:
+    config = configparser.ConfigParser()
+    config.read('scan.conf')
+
+    Tstart = int(config['TWScan']['start'])
+    Tlength = int(config['TWScan']['length'])
+    Tstep = int(config['TWScan']['step'])
+    RX = config['TWScan']['RX']
+    TC = float(config['TWScan']['TC'])
+    nD0 = int(config['TWScan']['nD0'])
+    nD1 = int(config['TWScan']['nD1'])
+    nD2 = int(config['TWScan']['nD2'])
+
+    # Calculate dwell time from time constant
+    if TC == 0.3:
+        Tdwell = 1
+
+    elif TC == 0.1:
+        Tdwell = 0.5
+
+    else:
+       Tdwell = 3*TC
+
+
+CP = ConfigParser()
+
+# Parser for command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('-q', help = 'Specify to close the program once the scan is finished. If not specified, the scan will finish and a terminal will open for control', action='store_true')
+parser.add_argument('-x', help = 'Horisontal position of sample ("x" position).', action='store')
+parser.add_argument('-y', help = 'Vertical position of sample along optical axis ("y" position).', action='store')
+parser.add_argument('-z', help = 'Position of sample along optical axis ("z" position).', action='store')
+args = parser.parse_args()
+
+
 ##################################################################
 #  Initialise the KLinGER MC4 motion controller (delay stage)    #
 ##################################################################
@@ -178,28 +237,55 @@ klinger = rm.open_resource('GPIB0::8::INSTR')  # 'open' Klinger stage
 # Sets required EOL termination
 klinger.write_termination = '\r'
 klinger.read_termination = '\r'
+klinger.timeout = 30000 # make the timeout large for long stage moves
 
-########################################################
-#  Initialise the Stanford instrumetnts SR830 (Lockin) #
-########################################################
-sr830 = rm.open_resource('GPIB0::6::INSTR')  # 'open' sr830
+##############################################
+### Initialise the Zurich instruments MFLI ###
+##############################################
 
-# parser for config file (scan parameters)
-config = configparser.ConfigParser()
-config.read('scan.conf')
+class MFLI:
 
-Tstart = int(config['TWScan']['start'])
-Tlength = int(config['TWScan']['length'])
-Tstep = int(config['TWScan']['step'])
-Tdwell = int(config['TWScan']['dwell'])
 
-# Parser for command line arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('-q', help = 'Specify to close the program once the scan is finished. If not specified, the scan will finish and a terminal will open for control', action='store_true')
-parser.add_argument('-x', help = 'Horisontal position of sample ("x" position).', action='store')
-parser.add_argument('-y', help = 'Vertical position of sample along optical axis ("y" position).', action='store')
-parser.add_argument('-z', help = 'Position of sample along optical axis ("z" position).', action='store')
-args = parser.parse_args()
+    def __init__(self): 
+        
+        self.demod_0 = 0 # make it a bit easier to know which demodulator i'm using
+        self.demod_1 = 1
+        self.demod_2 = 2
+        
+        device_id = 'dev3047' # Serial number of our MFLI
+        apilevel = 6
+
+        (self.daq, self.device, self.props) = zhinst.utils.create_api_session(device_id,
+                                                            apilevel,
+                                                            required_devtype='.*LI|.*IA|.*IS') # Create API session
+    def set(self):
+     # Stop from any data streaming/being collected (needs to be done as prep for measurements)
+        self.daq.unsubscribe('*')
+    
+       # Experimental settings
+        exp_setting = [['/%s/demods/%d/timeconstant' % (self.device, self.demod_0), CP.TC], # Set filter time constant
+                        ['/%s/demods/%d/timeconstant' % (self.device, self.demod_1), CP.TC], # Set filter time constant
+                        ['/%s/demods/%d/timeconstant' % (self.device, self.demod_2), CP.TC], # Set filter time constant
+                        ['/%s/demods/%d/harmonic' % (self.device, self.demod_0), CP.nD0], # Set harmonic for measurement
+                        ['/%s/demods/%d/harmonic' % (self.device, self.demod_1), CP.nD1], # Set harmonic for measurement
+                        ['/%s/demods/%d/harmonic' % (self.device, self.demod_2), CP.nD2]] # Set harmonic for measurement
+    
+        self.daq.set(exp_setting)
+        # Wait for demod filter to settle (10 * filter time constant)
+
+        self.daq.unsubscribe('*')
+
+        time.sleep(10*CP.TC)
+        # SYNC (make sure PC and MFLI agree with settings, etc...)
+        # must be done after waiting for the demod filter to settle
+        self.daq.sync()
+
+MFLI = MFLI()
+MFLI.set()
+
+def klinger_startPos():
+    klinger.write("PW" + str(Tstart)) # Move klinger to start position
+    klingerPos = float(klinger.query('DW').strip("W=+")) # request position (will only be provided when movement is com plete) Strip formatting and generate position as float
 
 app = QtGui.QApplication([])
 screen= app.desktop().availableGeometry() # get size of screen not already occupied (e.g. by the 0.0windows bar)
@@ -213,7 +299,7 @@ win.setGeometry(0, TitleBar, screen.width()-ConsoleWidth, screen.height()-TitleB
 win.show()
 
 NotificationText = pg.LabelItem(justify='left')
-ScanParameterText = "<span style='font-size: 12pt'><span style='color: white'>Start: %0.0f, Length: %0.0f, Step: %0.0f, Dwell:, %0.0f" % (Tstart, Tlength, Tstep, Tdwell)
+ScanParameterText = "<span style='font-size: 12pt'><span style='color: white'>Start: %0.0f, Length: %0.0f, Step: %0.0f, Dwell:, %0.1f" % (CP.Tstart, CP.Tlength, CP.Tstep, CP.Tdwell)
 
 if args.q:
     CloseOnFinish = True
@@ -266,7 +352,7 @@ proxy2 = pg.SignalProxy(FFT.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved
 
 # array with positions of time delay stage
 
-stage = np.arange(Tstart, Tstart-Tlength-Tstep, -Tstep) # the extra Tstep is to account for the final time position, as python is zero indexed
+stage = np.arange(CP.Tstart, CP.Tstart-CP.Tlength-CP.Tstep, -CP.Tstep) # the extra Tstep is to account for the final time position, as python is zero indexed
 
 fileSetup()
 start()
