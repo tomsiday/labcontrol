@@ -301,14 +301,16 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
         # set variable to the value in the box (will complain if empty)
         XT_pos_space_init = self.ui.XTStartSpace.text()
         # check for which scan axis used (x or y)
-        if self.ui.ScanAlongY.isChecked() == True: # (is y?)
+        if self.ui.ScanAlongY.isChecked() is True: # (is y?)
             # move stage to start position (y)
             XYscanner.position(2, int(XT_pos_space_init)*1e-3, True)
-        if self.ui.ScanAlongX.isChecked() == True: # (is x?)
+            # display confirmation the position has been set
+            print("Y axis start position " + XT_pos_space_init)
+        if self.ui.ScanAlongX.isChecked() is True: # (is x?)
             # move stage to start position (x)
-            XYscanner.position(2, int(XT_pos_space_init)*1e-3, True)
-        # display confirmation the position has been set
-        print("X axis start position " + XT_pos_space_init)
+            XYscanner.position(1, int(XT_pos_space_init)*1e-3, True)
+            # display confirmation the position has been set
+            print("X axis start position " + XT_pos_space_init)
 
     def UpdateXTStepSpace(self): # set the XT scan step (space)
         global XTStepSpace # import global variable
@@ -439,8 +441,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
         print(Z) # print the final dataset
         currenttime = datetime.datetime.now() # grab the time for the filename
         # generate the filename string
-        filename = ("%02d%02d-XTScan.txt" % (currenttime.hour, currenttime.minute))
-        np.savetxt(filename, Z, delimiter=',') # save the data (Z only for now)
+        np.savetxt(datafilename, Z, delimiter=',') # save the data (Z only for now)
         # TODO: add the x and y values, and experiment parameters in a separate file or header
 
     def startXYScan(self):
@@ -454,8 +455,8 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
         # create arrays with the scan positions in x and y
         x = np.arange(float(XY_posX_init), float(XY_posX_init)+float(XYLengthX), float(XYStepX))
         y = np.arange(float(XY_posY_init), float(XY_posY_init)+float(XYLengthY), float(XYStepY))
-        print(x) # print the arrays
-        print(y)
+        #print(x) # print the arrays
+        #print(y)
         # create meshgrid for plotting (check numpy/pyplot docs for details)
         X, Y, = np.mgrid[
             int(XY_posX_init):int(XY_posX_init)+
@@ -465,9 +466,33 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
         Z = np.zeros((len(y), len(x))) # initialize empty array for lock-in data
         # add plot in the correct window of the XY scan tab
         ax = self.ui.XYPlot.figure.add_subplot(111)
+        # get time for filename
+        starttime = datetime.datetime.now()
+        print("► XY Scan start : %s ◄               " % starttime.strftime("%H:%M:%S"), end='', flush=True)
+        # generate filename string
+        basename = ("%4d%02d%02d-%02d%02d" % (starttime.year, starttime.month, starttime.day, starttime.hour, starttime.minute))
+        metafilename = (basename + "-XYScan-metadata.txt")
+        datafilename = (basename + "-XYScan.txt")
+        metafile = open(metafilename, 'w')
+        metafile.write("{\n")
+        metafile.write("\t\"FileName\":\"%s\",\n" % datafilename)
+        metafile.write("\t\"XStart\":%f,\n" % XYscanner.position(1))
+        metafile.write("\t\"YStart\":%f,\n" % XYscanner.position(2))
+        metafile.write("\t\"ZStart\":%f,\n" % XYscanner.position(3))
+        metafile.write("\t\"XRange\":%s,\n" % XYLengthX)
+        metafile.write("\t\"YRange\":%s,\n" % XYLengthY)
+        metafile.write("\t\"XStep\":%s,\n" % XYStepX)
+        metafile.write("\t\"YStep\":%s,\n" % XYStepY)
+        metafile.write("\t\"DelayInit\":%s,\n" % delay_pos_init)
+        metafile.write("\t\"Date\":\"%s\",\n" % datetime.date.today())
+        metafile.write("\t\"StartTime\":\"%s\",\n" % starttime.strftime("%H:%M:%S"))
+        metafile.write("\t\"DwellTime\":%f\n" % t_wait)
+        metafile.write("}\n")
+        metafile.close()
         for a in range(0, len(y)): # loop over length of scan
             XYscanner.position(1, x[0]*1e-3, True) # set x position back to start of scan
             XYscanner.position(2, y[a]*1e-3) # set y position
+            time.sleep(t_wait) # wait for lock-in filter to settle
             for b in range(0, len(x)): # loop over length of scan
                 XYscanner.position(1, x[b]*1e-3) # set x position
                 time.sleep(t_wait) # wait for lock-in filter to settle
@@ -488,12 +513,17 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
                 # Flush the plot drawing - makes sure the plot updates.
                 self.ui.XYPlot.flush_events()
                 yield # has the stop button been pressed?
-        print(Z) # print the final dataset
+        #print(Z) # print the final dataset
         # gets current time for filename
         currenttime = datetime.datetime.now()
         # generate filename string
-        filename = ("%4d%02d%02d-%02d%02d-XYScan.txt" % (currenttime.year,currenttime.month,currenttime.day,currenttime.hour, currenttime.minute))
-        np.savetxt(filename, Z, delimiter=',') # save data (no x,y)
+        metafile = open(metafilename, 'a')
+        metafile.write("#  Finish time: %s\n" % datetime.datetime.now().strftime("%H:%M:%S"))
+        metafile.close()
+#        filename = ("%4d%02d%02d-%02d%02d-XYScan.txt" % (currenttime.year,currenttime.month,currenttime.day,currenttime.hour, currenttime.minute))
+        np.savetxt(datafilename, Z, delimiter=',') # save data (no x,y)
+        print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b► Finished : %s ◄" % datetime.datetime.now().strftime("%H:%M:%S"))
+
 
     def UpdateDelayPos(self):
         """ Set and move delay stage (global control) """
@@ -616,7 +646,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow): # PyQt4 GUI window class.
         metafile.write("#  Date       : %s\n" % datetime.date.today())
         metafile.write("#  Start time : %s\n" % starttime.strftime("%H:%M:%S"))
         metafile.close()
-        datafile = open(datafilename, 'w')
+        datafile = open(datafilename, 'w', buffering=1)
         for a in range(0, len(X)): # loop with length = number of points in scan
             print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b%04d of %04d ►" % (a + 1 ,len(X)), end='', flush=True)
             # Send the position to the KLINGER.
