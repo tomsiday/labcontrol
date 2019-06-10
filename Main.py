@@ -111,7 +111,7 @@ class ESP301:
         return float(self.dev.readline(-1).decode('ascii').rstrip())
 
 print('╔══════════════════════════════════════════════════════╗')
-print('║ labcontrol                                  Lab 910  ║')
+print('║ labcontrol 2019 06 07                       Lab 910  ║')
 ###############################################################################
 # Initial values
 #    Position values in microns
