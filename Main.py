@@ -58,7 +58,7 @@ import zhinst.utils  # Zurich instruments MFLI
 # Newport ESP301 Motion controller
 class ESP301:
     """ Newport ESP301 Motion controller class """
-    def __init__(self, port="COM6", baudrate=921600):
+    def __init__(self, port="COM3", baudrate=921600):
         """ Initializes serial port, cleans buffers and prints port config """
         self.dev = serial.Serial(port, baudrate, rtscts=True, timeout=5)
         self.dev.flush()
@@ -239,7 +239,7 @@ daq.sync()
 print('╟──────────────────────────────────────────────────────╢')
 print('║ ESP301 via USB-RS232                                 ║')
 # Initialise ESP301 serial connection
-XYscanner = ESP301('COM10')
+XYscanner = ESP301('COM3')
 
 # Ask the ESP301 to identify the stages on axis 1,2,3
 print('║   Stage %18s Connected (AX1)           ║' % XYscanner.stagemodel(1))
